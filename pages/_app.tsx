@@ -1,9 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import "@/styles/globals.css";
-import type { AppProps } from "next/app";
+import { AppProps } from "next/app";
+import { useEffect, useState } from "react";
 
-export default function App({ Component, pageProps }: AppProps) {
-  // return <Component {...pageProps} />;
+const App = ({ Component, pageProps }: AppProps) => {
+  const [render, setRender] = useState(false);
 
-  return <div>test</div>;
-}
+  useEffect(() => setRender(true), []);
+  return render ? <Component {...pageProps} /> : null;
+};
+export default App;
