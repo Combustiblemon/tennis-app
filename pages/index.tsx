@@ -6,6 +6,13 @@ import AuthLayout from "@/features/Auth/AuthLayout/AuthLayout";
 import Login from "@/features/Auth/Login/Login";
 import Welcome from "@/features/Auth/Welcome/Welcome";
 import Register from "@/features/Auth/Register/Register";
+import AppLayout from "@/features/Application/AppLayout/AppLayout";
+import HomeScreen from "@/features/Application/MainMenu/HomeScreen/HomeScreen";
+import MyBookings from "@/features/Application/MainMenu/MyBookings/MyBookings";
+import MakeABooking from "@/features/Application/MainMenu/MakeABooking/MakeABooking";
+import Notifications from "@/features/Application/Notifications/Notifications";
+import FindAnOpponent from "@/features/Application/MainMenu/FindAnOpponent/FindAnOpponent";
+import MyAccount from "@/features/Application/MainMenu/MyAccount/MyAccount";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,14 +33,20 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className={`${geistSans.variable}`}>
+      <main
+        className={`${geistSans.variable}`}
+        style={{
+          maxWidth: "600px",
+          width: "100%",
+          height: "100dvh",
+          border: "1px solid red",
+        }}
+      >
         <BrowserRouter>
           <Routes>
             {/* This route is responsive for the public Auth pages Welcome - Login - Register */}
-
             <Route path="/" element={<AuthLayout />}>
               <Route path="login" element={<Login />} />
-
               <Route path="register" element={<Register />} />
 
               <Route
@@ -43,17 +56,31 @@ export default function Home() {
             </Route>
 
             {/* The Route below is responsible for The Rest of the App it self */}
+            <Route path="/dashboard" element={<AppLayout />}>
+              <Route
+                path="/dashboard/notifications"
+                element={<Notifications />}
+              />
 
-            {/* <Route path="/" element={<AppLayout />}>
-              <Route path="dashboard" element={<HomeScreen />} />
-
-              <Route path="register" element={<Register />} />
+              <Route path="/dashboard/my-bookings" element={<MyBookings />} />
 
               <Route
-                index // <-- "/"
-                element={<Welcome />}
+                path="/dashboard/make-booking"
+                element={<MakeABooking />}
               />
-            </Route> */}
+
+              <Route
+                path="/dashboard/find-opponent"
+                element={<FindAnOpponent />}
+              />
+
+              <Route path="/dashboard/account" element={<MyAccount />} />
+
+              <Route
+                index // <-- "/dashboard"
+                element={<HomeScreen />}
+              />
+            </Route>
           </Routes>
         </BrowserRouter>
       </main>

@@ -11,6 +11,8 @@ const Login = () => {
         <li onClick={() => navigate("/register")}>
           Do not have an account Register !!
         </li>
+
+        <li onClick={() => navigate("/dashboard")}>LOGIN!!!!!!</li>
       </ol>
     </div>
   );
