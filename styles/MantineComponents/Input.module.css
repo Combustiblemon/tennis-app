@@ -1,0 +1,76 @@
+.input {
+  &[data-variant='primary'] {
+    height: 56px;
+    border: 1px solid var(--color-gray300);
+    /* box-shadow: 0px 0px 1px var(--color-gray400); */
+    padding: 0 var(--spacing-md);
+    font-size: 14px;
+    font-weight: 400;
+    border-radius: 5px;
+
+    transition: background-color 0.6s ease;
+
+    background-color: var(--color-white);
+
+    transition: all 0.3 ease;
+
+    &:focus {
+      border-color: var(--color-blue);
+    }
+
+    &:focus-within {
+      border-color: var(--color-blue);
+    }
+
+    &[data-error] {
+      border-color: var(--color-error);
+
+      &:focus {
+        border: 1px solid var(--color-red);
+      }
+
+      &:focus-within {
+        border: 1px solid var(--color-red);
+      }
+    }
+
+    &[data-disabled] {
+      background-color: var(--color-bg3);
+    }
+  }
+
+  &[data-variant='filled'] {
+    height: 42px;
+    padding: 0 var(--spacing-md);
+
+    padding-right: 60px;
+
+    font-size: 14px;
+    font-weight: 400;
+    border-radius: 5px;
+
+    width: 387px;
+
+    background-color: var(--color-bg3);
+
+    &:focus {
+      border-color: var(--color-blue);
+    }
+
+    &:focus-within {
+      border-color: var(--color-blue);
+    }
+
+    &[data-error] {
+      border-color: var(--color-error);
+
+      &:focus {
+        border: 1px solid var(--color-red);
+      }
+
+      &:focus-within {
+        border: 1px solid var(--color-red);
+      }
+    }
+  }
+}
