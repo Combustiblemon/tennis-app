@@ -1,28 +1,11 @@
 {
-  "name": "tennis-app",
+  "name": "@tennis-app/source",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "@mantine/core": "^7.16.0",
-    "@mantine/dates": "^7.16.0",
-    "@mantine/hooks": "^7.16.0",
-    "@mantine/notifications": "^7.16.0",
-    "@tanstack/react-query": "^5.64.1",
-    "@tanstack/react-query-devtools": "^5.64.1",
-    "dayjs": "^1.11.13",
-    "next": "15.1.4",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router": "^7.1.1",
-    "zod": "^3.24.1",
-    "zustand": "^5.0.3"
-  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {},
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/node": "^20",
@@ -30,6 +13,6 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.1.4",
-    "typescript": "^5"
+    "typescript": "^5.7.3"
   }
 }
