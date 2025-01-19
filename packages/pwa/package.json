@@ -1,13 +1,4 @@
 {
-  "name": "@tennis-app/pwa",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "nx next:dev",
-    "build": "nx next:build",
-    "start": "nx next:start",
-    "lint": "next lint"
-  },
   "dependencies": {
     "@mantine/core": "^7.16.0",
     "@mantine/dates": "^7.16.0",
@@ -25,13 +16,13 @@
     "zod": "^3.24.1",
     "zustand": "^5.0.3"
   },
-  "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@types/node": "^20",
-    "@types/react": "^19.0.7",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.1.4",
-    "typescript": "^5"
-  }
+  "name": "@tennis-app/pwa",
+  "private": true,
+  "scripts": {
+    "build": "nx next:build",
+    "dev": "nx next:dev",
+    "lint": "next lint",
+    "start": "nx next:start"
+  },
+  "version": "0.1.0"
 }

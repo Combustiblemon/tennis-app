@@ -1,0 +1,33 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@tennis-app/server",
+  "projectType": "application",
+  "sourceRoot": "packages/server/src",
+  "tags": [],
+  "targets": {
+    "serve": {
+      "configurations": {
+        "development": {
+          "buildTarget": "server:build:development"
+        },
+        "production": {
+          "buildTarget": "server:build:production"
+        }
+      },
+      "defaultConfiguration": "development",
+      "dependsOn": [
+        "build"
+      ],
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "server:build",
+        "runBuildTargetDependencies": false
+      }
+    },
+    "test": {
+      "options": {
+        "passWithNoTests": true
+      }
+    }
+  }
+}

@@ -3,6 +3,9 @@
   "references": [
     {
       "path": "./packages/pwa"
+    },
+    {
+      "path": "./packages/server"
     }
   ]
 }
