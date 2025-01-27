@@ -112,7 +112,6 @@ UserSchema.methods.compareSessions = function (session?: string) {
   return bcrypt.compareSync(session, (this as Users).session || '');
 };
 
-
 UserSchema.methods.sanitize = function (): UserSanitized {
   return (this as Users).toObject({
     transform: (doc, ret) =>
@@ -139,5 +138,8 @@ UserSchema.pre<Users>('save', function (next) {
   next();
 });
 
-export default (mongoose.models.User as Model<Users>) ||
+const UserModel =
+  (mongoose.models.User as Model<Users>) ||
   mongoose.model<Users>('User', UserSchema);
+
+export default UserModel;

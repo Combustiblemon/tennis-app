@@ -2,21 +2,12 @@ import express, { Express, Router } from 'express';
 
 const setupAuthGroup = (app: Express) => {
   const auth = express.Router({ mergeParams: true });
+  app.use('/auth', auth);
   {
     auth.get('/session');
     auth.post('/login');
     auth.post('/register');
   }
-
-  const callback = express.Router({ mergeParams: true });
-  {
-    callback.get('/google/start');
-    callback.get('/google/callback');
-  }
-
-  auth.use('/providers', callback);
-
-  app.use('/auth', auth);
 };
 
 const setupAdminGroup = (app: Router) => {
