@@ -1,7 +1,9 @@
 import express, { Express, Router } from 'express';
 
 import { login, register } from '../handlers/auth';
-import reservation from '../handlers/reservations';
+import court from '../handlers/court';
+import reservation from '../handlers/reservation';
+import user from '../handlers/user';
 import { userAuth } from '../middleware/auth';
 
 const setupAuthGroup = (app: Express) => {
@@ -72,14 +74,14 @@ const setupAuthorizedGroup = (app: Express) => {
     const courts = express.Router({ mergeParams: true });
     authorized.use('/courts', reservations);
     {
-      courts.get('/');
-      courts.get('/:id');
+      courts.get('/', court.getOne);
+      courts.get('/:id', court.getMany);
     }
 
     const users = express.Router({ mergeParams: true });
     authorized.use('/users', reservations);
     {
-      users.put('/');
+      users.put('/', user.updateOne);
     }
   }
 
