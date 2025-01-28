@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import mongoose, { Model } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import z from 'zod';
 
 export const UserValidator = z.object({
@@ -20,10 +20,11 @@ type SanitizedUserFields =
 
 export type UserDataType = z.infer<typeof UserValidator>;
 
-export type UserSanitized = Pick<Users, SanitizedUserFields>;
+export type UserSanitized = Pick<User, SanitizedUserFields>;
 
-export type Users = mongoose.Document &
+export type User = mongoose.Document &
   z.infer<typeof UserValidator> & {
+    _id: Types.ObjectId;
     resetKey?: {
       value: string;
       expiresAt: Date;
@@ -36,7 +37,7 @@ export type Users = mongoose.Document &
     sanitize: () => UserSanitized;
   };
 
-export const UserSchema = new mongoose.Schema<Users>({
+export const UserSchema = new mongoose.Schema<User>({
   name: {
     type: String,
     maxlength: [60, 'User name cannot be more than 60 characters'],
@@ -84,7 +85,7 @@ export const UserSchema = new mongoose.Schema<Users>({
 });
 
 UserSchema.methods.comparePasswords = function (candidatePassword?: string) {
-  const user = this as Users;
+  const user = this as User;
 
   if (!candidatePassword || !user.password) {
     return false;
@@ -98,7 +99,7 @@ UserSchema.methods.compareResetKey = function (resetKey?: string) {
     return false;
   }
 
-  const user = this as Users;
+  const user = this as User;
   return (
     resetKey === user.resetKey?.value && new Date() < user.resetKey?.expiresAt
   );
@@ -109,11 +110,11 @@ UserSchema.methods.compareSessions = function (session?: string) {
     return false;
   }
 
-  return bcrypt.compareSync(session, (this as Users).session || '');
+  return session === (this as User).session;
 };
 
 UserSchema.methods.sanitize = function (): UserSanitized {
-  return (this as Users).toObject({
+  return (this as User).toObject({
     transform: (doc, ret) =>
       ({
         name: ret.name,
@@ -126,20 +127,16 @@ UserSchema.methods.sanitize = function (): UserSanitized {
   });
 };
 
-UserSchema.pre<Users>('save', function (next) {
+UserSchema.pre<User>('save', function (next) {
   if (this.isModified('password') && this.password) {
     this.password = bcrypt.hashSync(this.password, 10);
-  }
-
-  if (this.isModified('session') && this.session) {
-    this.session = bcrypt.hashSync(this.session, 10);
   }
 
   next();
 });
 
 const UserModel =
-  (mongoose.models.User as Model<Users>) ||
-  mongoose.model<Users>('User', UserSchema);
+  (mongoose.models.User as Model<User>) ||
+  mongoose.model<User>('User', UserSchema);
 
 export default UserModel;

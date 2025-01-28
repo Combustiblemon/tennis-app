@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import signale from 'signale';
 import { z } from 'zod';
 
-import UserModel, { Users, UserSanitized } from '../models/User';
+import UserModel, { User, UserSanitized } from '../models/User';
 import { Errors, onError, onSuccess } from '../modules/common';
 import { subscribeUser } from '../modules/notifications';
 
@@ -34,7 +34,7 @@ export const login = async (req: Request, res: Response) => {
 
   const { email, FCMToken, password } = data;
 
-  let user: Users | null;
+  let user: User | null;
 
   try {
     user = await UserModel.findOne({
@@ -84,17 +84,22 @@ export const login = async (req: Request, res: Response) => {
 
     await user.save();
 
-    onSuccess(
-      {
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        _id: user._id as string,
-        FCMToken: FCMToken || '',
-        session,
-      },
-      'login',
-      'POST',
+    res.cookie('session', user.session, {
+      httpOnly: true,
+    });
+
+    return res.status(200).json(
+      onSuccess(
+        {
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          _id: user._id as string,
+          FCMToken: FCMToken || '',
+          session,
+        },
+        'login',
+      ),
     );
   } catch (err) {
     signale.error(err);
@@ -110,7 +115,10 @@ export const register = async (req: Request, res: Response) => {
 
   if (!result.success) {
     signale.error('Register: Error parsing credentials', result.error);
-    throw new Error(Errors.INVALID_CREDENTIALS);
+
+    return res
+      .status(400)
+      .json(onError(new Error(Errors.INVALID_CREDENTIALS), 'register'));
   }
 
   const data = result.data;
@@ -124,14 +132,15 @@ export const register = async (req: Request, res: Response) => {
   } catch (error) {
     signale.error('Error checking if user exists', error);
 
-    res
+    return res
       .status(500)
       .json(onError(new Error('internal server error'), 'register'));
-    return;
   }
 
   if (userExists) {
-    throw new Error(Errors.USER_EXISTS);
+    return res
+      .status(400)
+      .json(onError(new Error(Errors.USER_EXISTS), 'register'));
   }
 
   let user: UserSanitized;
@@ -152,11 +161,9 @@ export const register = async (req: Request, res: Response) => {
   } catch (error) {
     signale.error('Error creating user', error);
 
-    res
+    return res
       .status(500)
       .json(onError(new Error(Errors.INTERNAL_SERVER_ERROR), 'register'));
-
-    return;
   }
 
   signale.info('User created', user.email);
@@ -167,13 +174,18 @@ export const register = async (req: Request, res: Response) => {
       subscribeUser(user.role, [FCMToken]);
     }
 
-    return {
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      _id: user._id as string,
-      FCMToken: FCMToken || '',
-      session,
-    };
+    return res.status(200).json(
+      onSuccess(
+        {
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          _id: user._id as string,
+          FCMToken: FCMToken || '',
+          session,
+        },
+        'register',
+      ),
+    );
   }
 };

@@ -1,6 +1,7 @@
-/* eslint-disable func-names */
 import mongoose, { Model } from 'mongoose';
 import z from 'zod';
+
+import { zodObjectId } from '../modules/common';
 
 const statusEnumValues = ['PENDING', 'APPROVED', 'REJECTED'] as const;
 const typeEnumValues = ['SINGLE', 'DOUBLE', 'TRAINING', 'PERSONAL'] as const;
@@ -9,7 +10,7 @@ export const ReservationValidator = z.object({
   type: z.enum(typeEnumValues),
   datetime: z.string(),
   people: z.array(z.string().max(50)),
-  owner: z.string().optional(),
+  owner: z.string().refine(zodObjectId).optional(),
   court: z.string(),
   status: z.enum(statusEnumValues).default('APPROVED'),
   paid: z.boolean().default(false),
@@ -20,13 +21,16 @@ export const ReservationValidator = z.object({
 export const ReservationValidatorPartial = ReservationValidator.deepPartial();
 
 type ReservationSanitized = Pick<
-  // eslint-disable-next-line no-use-before-define
   ReservationType,
   'type' | 'court' | 'datetime' | 'duration'
 >;
 
-export type ReservationDataType = z.infer<typeof ReservationValidator> & {
-  _id: string;
+export type ReservationDataType = Omit<
+  z.infer<typeof ReservationValidator>,
+  'owner'
+> & {
+  _id: mongoose.Types.ObjectId;
+  owner?: mongoose.Types.ObjectId;
 };
 
 export type ReservationType = mongoose.Document &
@@ -81,5 +85,8 @@ ReservationSchema.methods.sanitize = function (): ReservationSanitized {
   });
 };
 
-export default (mongoose.models.Reservation as Model<ReservationType>) ||
+const ReservationModel =
+  (mongoose.models.Reservation as Model<ReservationType>) ||
   mongoose.model<ReservationType>('Reservation', ReservationSchema);
+
+export default ReservationModel;

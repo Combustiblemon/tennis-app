@@ -3,14 +3,14 @@ import { initializeApp } from 'firebase-admin/app';
 import signale from 'signale';
 
 export enum Topics {
-  Admin = 'admin',
-  User = 'user',
-  Tournament = 'tournament',
+  ADMIN = 'admin',
+  USER = 'user',
+  TOURNAMENT = 'tournament',
 }
 
 const topicMap = {
-  USER: [Topics.User, Topics.Tournament],
-  ADMIN: [Topics.Admin],
+  USER: [Topics.USER, Topics.TOURNAMENT],
+  ADMIN: [Topics.ADMIN],
 } as const;
 
 let app = false;
@@ -20,7 +20,7 @@ const initApp = () => {
     if (!app) {
       initializeApp({
         credential: credential.cert(
-          JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS || '{}')
+          JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS || '{}'),
         ),
       });
 
@@ -29,7 +29,7 @@ const initApp = () => {
   } catch (err) {
     if (
       (err as Error).message.startsWith(
-        'The default Firebase app already exists.'
+        'The default Firebase app already exists.',
       )
     ) {
       app = true;
@@ -42,7 +42,7 @@ const initApp = () => {
 
 export const sendMessageToTokens = (
   tokens: string[],
-  data: Record<string, string>
+  data: Record<string, string>,
 ) => {
   if (!tokens.length) {
     return;
@@ -68,7 +68,7 @@ export const sendMessageToTokens = (
 
 export const sendMessageToTopic = (
   topic: Topics,
-  data: Record<string, string>
+  data: Record<string, string>,
 ) => {
   initApp();
 
@@ -87,7 +87,7 @@ export const sendMessageToTopic = (
 
 export const subscribeToTopic = async (
   tokens: string[],
-  topic: Topics | Array<Topics>
+  topic: Topics | Array<Topics>,
 ) => {
   if (!tokens.length) {
     return;
@@ -105,14 +105,14 @@ export const subscribeToTopic = async (
     const res = await Promise.allSettled(
       topic.map(async (t) => {
         return [await messaging().subscribeToTopic(tokens, t), t] as const;
-      })
+      }),
     );
 
     if (
       res.some(
         (r) =>
           (r.status === 'fulfilled' && r.value[0].failureCount > 0) ||
-          r.status === 'rejected'
+          r.status === 'rejected',
       )
     ) {
       const errors = res.map((p) => {
@@ -140,7 +140,7 @@ export const subscribeToTopic = async (
 
 export const unsubscribeFromTopic = async (
   tokens: string[],
-  topic: Topics | Array<Topics>
+  topic: Topics | Array<Topics>,
 ) => {
   if (!tokens.length) {
     return;
@@ -158,14 +158,14 @@ export const unsubscribeFromTopic = async (
     const res = await Promise.allSettled(
       topic.map(async (t) => {
         return [await messaging().unsubscribeFromTopic(tokens, t), t] as const;
-      })
+      }),
     );
 
     if (
       res.some(
         (r) =>
           (r.status === 'fulfilled' && r.value[0].failureCount > 0) ||
-          r.status === 'rejected'
+          r.status === 'rejected',
       )
     ) {
       const errors = res.map((p) => {
@@ -189,7 +189,7 @@ export const unsubscribeFromTopic = async (
 
 export const subscribeUser = async (
   userType: keyof typeof topicMap,
-  tokens: Array<string>
+  tokens: Array<string>,
 ) => {
   if (!tokens || !tokens.length) {
     return;
@@ -206,7 +206,7 @@ export const subscribeUser = async (
 
 export const unsubscribeUser = async (
   userType: keyof typeof topicMap,
-  tokens: Array<string>
+  tokens: Array<string>,
 ) => {
   if (!tokens || !tokens.length) {
     return;

@@ -1,12 +1,16 @@
 import express, { Express, Router } from 'express';
 
+import { login, register } from '../handlers/auth';
+import reservation from '../handlers/reservations';
+import { userAuth } from '../middleware/auth';
+
 const setupAuthGroup = (app: Express) => {
   const auth = express.Router({ mergeParams: true });
   app.use('/auth', auth);
   {
     auth.get('/session');
-    auth.post('/login');
-    auth.post('/register');
+    auth.post('/login', login);
+    auth.post('/register', register);
   }
 };
 
@@ -53,16 +57,16 @@ const setupAuthorizedGroup = (app: Express) => {
   const authorized = express.Router({ mergeParams: true });
   app.use('/', authorized);
 
-  authorized.use(/*middleware.Auth()*/);
+  authorized.use(userAuth);
   {
     const reservations = express.Router({ mergeParams: true });
     authorized.use('/reservations', reservations);
     {
-      reservations.get('/');
-      reservations.post('/');
-      reservations.get('/:id');
-      reservations.put('/:id');
-      reservations.delete('/:id');
+      reservations.get('/', reservation.getMany);
+      reservations.post('/', reservation.postOne);
+      reservations.get('/:id', reservation.getOne);
+      reservations.put('/:id', reservation.updateOne);
+      reservations.delete('/:id', reservation.deleteMany);
     }
 
     const courts = express.Router({ mergeParams: true });

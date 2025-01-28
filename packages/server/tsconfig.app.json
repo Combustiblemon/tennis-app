@@ -1,10 +1,12 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist/out-tsc",
+    "composite": true,
+    "outDir": "../../dist/server-out-tsc",
     "module": "ES2022",
-    "types": ["node", "express"]
+    "types": ["node", "express"],
+    "noEmit": false
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "global.d.ts"],
   "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
 }

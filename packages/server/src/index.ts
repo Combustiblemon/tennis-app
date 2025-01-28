@@ -1,4 +1,5 @@
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import signale from 'signale';
@@ -20,7 +21,7 @@ app.use(
         !origin ||
         !process.env.ALLOW_ORIGIN ||
         process.env.ALLOW_ORIGIN?.includes(findOrigin(origin)) ||
-        process.env.DB !== 'PROD_DB'
+        process.env.PRODUCTION !== 'true'
       ) {
         callback(null, true);
       } else {
@@ -34,10 +35,11 @@ app.use(
 app.use(express.json({ limit: '5mb' }));
 
 app.use(compression());
+app.use(cookieParser(process.env.SECRET));
 
 setupRoutes(app);
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 2000;
 
 const server = app.listen(port, () => {
   signale.info(`Listening at http://localhost:${port}/`);
