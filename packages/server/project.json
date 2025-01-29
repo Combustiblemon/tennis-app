@@ -1,6 +1,6 @@
 {
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "name": "server",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "sourceRoot": "packages/server/src",
   "tags": [],
@@ -15,9 +15,7 @@
         }
       },
       "defaultConfiguration": "development",
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "executor": "@nx/js:node",
       "options": {
         "buildTarget": "server:build",
@@ -27,6 +25,16 @@
     "test": {
       "options": {
         "passWithNoTests": true
+      }
+    },
+    "build": {
+      "executor": "@nx/js:swc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/server",
+        "main": "packages/server/src/index.ts",
+        "tsConfig": "packages/server/tsconfig.app.json",
+        "assets": []
       }
     }
   }

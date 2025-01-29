@@ -5,6 +5,16 @@
   "sourceRoot": "packages/pwa",
   "tags": [],
   "targets": {
+    "build": {
+      "cache": true,
+      "executor": "@nx/next:build",
+      "options": {
+        "outputPath": "dist/packages/pwa"
+      },
+      "outputs": [
+        "{options.outputPath}"
+      ]
+    },
     "serve": {
       "configurations": {
         "development": {
@@ -18,7 +28,7 @@
       "dependsOn": [
         "build"
       ],
-      "executor": "@nx/js:node",
+      "executor": "@nx/next:server",
       "options": {
         "buildTarget": "pwa:build",
         "runBuildTargetDependencies": false

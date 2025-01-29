@@ -15,9 +15,7 @@
       "plugin": "@nx/js/typescript"
     },
     {
-      "exclude": [
-        "packages/server/**"
-      ],
+      "exclude": ["packages/server/**"],
       "options": {
         "buildTargetName": "next:build",
         "devTargetName": "next:dev",
@@ -33,9 +31,7 @@
       "plugin": "@nx/eslint/plugin"
     },
     {
-      "exclude": [
-        "packages/pwa/**"
-      ],
+      "exclude": ["packages/pwa/**"],
       "options": {
         "buildTargetName": "build",
         "previewTargetName": "preview",
@@ -44,9 +40,7 @@
       "plugin": "@nx/webpack/plugin"
     },
     {
-      "exclude": [
-        "packages/server-e2e/**/*"
-      ],
+      "exclude": ["packages/server-e2e/**/*"],
       "options": {
         "targetName": "test"
       },
@@ -56,6 +50,11 @@
   "targetDefaults": {
     "lint": {
       "cache": true
+    },
+    "@nx/js:swc": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["default", "^default"]
     }
   }
 }
