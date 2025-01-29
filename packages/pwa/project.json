@@ -1,17 +1,17 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "server",
+  "name": "pwa",
   "projectType": "application",
-  "sourceRoot": "packages/server/src",
+  "sourceRoot": "packages/pwa",
   "tags": [],
   "targets": {
     "serve": {
       "configurations": {
         "development": {
-          "buildTarget": "server:build:development"
+          "buildTarget": "pwa:build:development"
         },
         "production": {
-          "buildTarget": "server:build:production"
+          "buildTarget": "pwa:build:production"
         }
       },
       "defaultConfiguration": "development",
@@ -20,7 +20,7 @@
       ],
       "executor": "@nx/js:node",
       "options": {
-        "buildTarget": "server:build",
+        "buildTarget": "pwa:build",
         "runBuildTargetDependencies": false
       }
     },

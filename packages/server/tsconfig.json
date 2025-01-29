@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "files": ["./global.d.ts"],
   "include": [],
+
   "references": [
     {
       "path": "./tsconfig.app.json"
@@ -11,6 +12,8 @@
     }
   ],
   "compilerOptions": {
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "composite": true,
+    "noEmit": false
   }
 }

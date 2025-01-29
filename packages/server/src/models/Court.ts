@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import z from 'zod';
 
-import { weekDays } from '@/lib/common';
+import { weekDays } from '../modules/common';
 
 export const CourtValidator = z.object({
   name: z.string().max(60),
@@ -18,7 +18,7 @@ export const CourtValidator = z.object({
         days: z.array(z.enum(weekDays)).optional(),
         notes: z.string().max(200).optional(),
         datesNotApplied: z.array(z.string()).optional(),
-      })
+      }),
     ),
     duration: z.number(),
   }),

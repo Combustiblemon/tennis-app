@@ -1,58 +1,61 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "targetDefaults": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["{projectRoot}/.next"],
-      "cache": true
-    },
-    "lint": {
-      "cache": true
-    }
-  },
   "defaultBase": "main",
   "plugins": [
     {
-      "plugin": "@nx/js/typescript",
       "options": {
+        "build": {
+          "configName": "tsconfig.lib.json",
+          "targetName": "build"
+        },
         "typecheck": {
           "targetName": "typecheck"
-        },
-        "build": {
-          "targetName": "build",
-          "configName": "tsconfig.lib.json"
         }
-      }
+      },
+      "plugin": "@nx/js/typescript"
     },
     {
-      "plugin": "@nx/next/plugin",
+      "exclude": [
+        "packages/server/**"
+      ],
       "options": {
-        "startTargetName": "next:start",
         "buildTargetName": "next:build",
         "devTargetName": "next:dev",
-        "serveStaticTargetName": "serve-static"
-      }
+        "serveStaticTargetName": "serve-static",
+        "startTargetName": "next:start"
+      },
+      "plugin": "@nx/next/plugin"
     },
     {
-      "plugin": "@nx/eslint/plugin",
       "options": {
         "targetName": "lint"
-      }
+      },
+      "plugin": "@nx/eslint/plugin"
     },
     {
-      "plugin": "@nx/webpack/plugin",
+      "exclude": [
+        "packages/pwa/**"
+      ],
       "options": {
         "buildTargetName": "build",
-        "serveTargetName": "serve",
-        "previewTargetName": "preview"
-      }
+        "previewTargetName": "preview",
+        "serveTargetName": "serve"
+      },
+      "plugin": "@nx/webpack/plugin"
     },
     {
-      "plugin": "@nx/jest/plugin",
+      "exclude": [
+        "packages/server-e2e/**/*"
+      ],
       "options": {
         "targetName": "test"
       },
-      "exclude": ["packages/server-e2e/**/*"]
+      "plugin": "@nx/jest/plugin"
     }
-  ]
+  ],
+  "targetDefaults": {
+    "lint": {
+      "cache": true
+    }
+  }
 }

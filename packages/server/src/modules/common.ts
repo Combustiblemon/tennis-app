@@ -239,3 +239,13 @@ export const authUserHelper = (req: Request) => {
 };
 
 export const zodObjectId = (val: string) => Types.ObjectId.isValid(val);
+
+export const weekDays = [
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+  'SUNDAY',
+] as const;

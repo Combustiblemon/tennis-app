@@ -6,10 +6,16 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "nx dev",
-    "build": "nx build",
-    "test": "nx test",
-    "lint": "nx lint"
+    "---------------Server---------------": "--------------------------------",
+    "server:dev": "nx dev server",
+    "server:build": "nx build server",
+    "server:test": "nx test server",
+    "server:lint": "nx lint server",
+    "----------------PWA----------------": "---------------------------------",
+    "pwa:dev": "nx dev pwa",
+    "pwa:build": "nx build pwa",
+    "pwa:test": "nx test pwa",
+    "pwa:lint": "nx lint pwa"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
