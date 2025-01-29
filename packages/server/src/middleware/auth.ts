@@ -22,3 +22,23 @@ export const userAuth = async (
   req.user = user;
   next();
 };
+
+export const adminAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const session = sessionCookie.get(req);
+
+  const user = await UserModel.findOne({
+    session,
+  });
+
+  if (!user || user.role !== 'ADMIN') {
+    next(Errors.UNAUTHORIZED);
+    return;
+  }
+
+  req.user = user;
+  next();
+};

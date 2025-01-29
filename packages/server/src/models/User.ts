@@ -2,6 +2,9 @@ import bcrypt from 'bcryptjs';
 import mongoose, { Model, Types } from 'mongoose';
 import z from 'zod';
 
+// 10 minutes
+const LOGIN_CODE_LIFETIME = 10 * 60 * 1000;
+
 export const UserValidator = z.object({
   name: z.string().max(60),
   role: z.enum(['ADMIN', 'USER']).default('USER'),
@@ -31,9 +34,14 @@ export type User = mongoose.Document &
     };
     FCMTokens?: Array<string>;
     session?: string;
+    loginCode?: {
+      code: string;
+      created: Date;
+    };
     comparePasswords: (candidatePassword?: string) => boolean;
     compareResetKey: (resetKey?: string) => boolean;
     compareSessions: (session?: string) => boolean;
+    compareLoginCode: (code?: string) => boolean;
     sanitize: () => UserSanitized;
   };
 
@@ -82,6 +90,14 @@ export const UserSchema = new mongoose.Schema<User>({
     type: String,
     enum: ['GOOGLE', 'PASSWORD'],
   },
+  loginCode: {
+    code: {
+      type: String,
+    },
+    created: {
+      type: Date,
+    },
+  },
 });
 
 UserSchema.methods.comparePasswords = function (candidatePassword?: string) {
@@ -125,6 +141,21 @@ UserSchema.methods.sanitize = function (): UserSanitized {
         session: ret.session,
       }) satisfies UserSanitized,
   });
+};
+
+UserSchema.methods.compareLoginCode = function (
+  date: Date,
+  code?: string,
+): boolean {
+  if (!code) {
+    return false;
+  }
+
+  return (
+    code.trim().toLowerCase() === (this as User).loginCode?.code &&
+    date.getTime() <
+      ((this as User).loginCode?.created.getTime() || 0) + LOGIN_CODE_LIFETIME
+  );
 };
 
 UserSchema.pre<User>('save', function (next) {

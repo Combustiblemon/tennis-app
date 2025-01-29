@@ -4,7 +4,7 @@ import signale from 'signale';
 import { z } from 'zod';
 
 import UserModel, { User, UserSanitized } from '../models/User';
-import { Errors, onError, onSuccess } from '../modules/common';
+import { Errors, onError, onSuccess, sessionCookie } from '../modules/common';
 import { subscribeUser } from '../modules/notifications';
 
 const registerValidator = z.object({
@@ -94,7 +94,7 @@ export const login = async (req: Request, res: Response) => {
           name: user.name,
           email: user.email,
           role: user.role,
-          _id: user._id as string,
+          _id: user._id.toString(),
           FCMToken: FCMToken || '',
           session,
         },
@@ -180,7 +180,7 @@ export const register = async (req: Request, res: Response) => {
           name: user.name,
           email: user.email,
           role: user.role,
-          _id: user._id as string,
+          _id: user._id.toString(),
           FCMToken: FCMToken || '',
           session,
         },
@@ -188,4 +188,10 @@ export const register = async (req: Request, res: Response) => {
       ),
     );
   }
+};
+
+export const logout = (req: Request, res: Response) => {
+  sessionCookie.clear(res);
+
+  res.status(200).json(onSuccess({}, 'logout'));
 };

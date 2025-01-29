@@ -1,10 +1,12 @@
 import express, { Express, Router } from 'express';
 
+import adminCourt from '../handlers/admin/court';
+import adminReservation from '../handlers/admin/reservation';
 import { login, register } from '../handlers/auth';
 import court from '../handlers/court';
 import reservation from '../handlers/reservation';
 import user from '../handlers/user';
-import { userAuth } from '../middleware/auth';
+import { adminAuth, userAuth } from '../middleware/auth';
 
 const setupAuthGroup = (app: Express) => {
   const auth = express.Router({ mergeParams: true });
@@ -20,38 +22,37 @@ const setupAdminGroup = (app: Router) => {
   const admin = express.Router({ mergeParams: true });
   app.use('/admin', admin);
 
-  admin.use(/*middleware.Admin()*/);
+  admin.use(adminAuth);
   {
     const reservations = express.Router({ mergeParams: true });
     app.use('/reservations', reservations);
     {
-      reservations.get('/');
-      reservations.post('/');
-      reservations.get('/:id');
-      reservations.put('/:id');
-      reservations.delete('/:id');
+      reservations.get('/', adminReservation.getMany);
+      reservations.post('/', adminReservation.createOne);
+      reservations.get('/:id', adminReservation.getOne);
+      reservations.delete('/', adminReservation.deleteMany);
     }
 
     const courts = express.Router({ mergeParams: true });
     app.use('/courts', courts);
     {
-      courts.get('/');
-      courts.post('/');
-      courts.get('/:id');
-      courts.put('/:id');
-      courts.delete('/:id');
+      courts.get('/', adminCourt.getMany);
+      courts.post('/', adminCourt.postOne);
+      courts.get('/:ids', adminCourt.getMany);
+      courts.put('/:id', adminCourt.updateOne);
+      courts.delete('/:id', adminCourt.deleteOne);
     }
 
-    const users = express.Router({ mergeParams: true });
-    app.use('/users', users);
-    {
-      users.get('/');
-      users.put('/');
-      users.get('/:id');
-      users.post('/:id');
-      users.put('/:id');
-      users.delete('/:id');
-    }
+    // const users = express.Router({ mergeParams: true });
+    // app.use('/users', users);
+    // {
+    //   users.get('/');
+    //   users.put('/');
+    //   users.get('/:id');
+    //   users.post('/:id');
+    //   users.put('/:id');
+    //   users.delete('/:id');
+    // }
   }
 };
 
