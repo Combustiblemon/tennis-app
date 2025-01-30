@@ -7,11 +7,27 @@
   "targets": {
     "build": {
       "cache": true,
+      "dependsOn": [
+        "buildCode"
+      ],
+      "executor": "nx:run-script",
+      "options": {
+        "main": "packages/server/src/index.ts",
+        "outputPath": "dist/server",
+        "script": "tsc-alias",
+        "tsConfig": "packages/server/tsconfig.app.json"
+      },
+      "output": [
+        "dist/server"
+      ]
+    },
+    "buildCode": {
+      "cache": true,
       "executor": "@nx/js:swc",
       "options": {
         "assets": [],
         "main": "packages/server/src/index.ts",
-        "outputPath": "dist/packages/server",
+        "outputPath": "dist/server",
         "tsConfig": "packages/server/tsconfig.app.json"
       },
       "outputs": [
@@ -19,6 +35,15 @@
       ]
     },
     "serve": {
+      "dependsOn": [
+        "server:build"
+      ],
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node dist/server/src/index.js"
+      }
+    },
+    "serveOld": {
       "configurations": {
         "development": {
           "buildTarget": "server:build:development"

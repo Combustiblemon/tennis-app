@@ -47,3 +47,4 @@ next-env.d.ts
 # Next.js
 .next
 out
+/tmp

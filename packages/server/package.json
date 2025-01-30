@@ -19,6 +19,9 @@
   },
   "name": "@tennis-app/server",
   "private": true,
-  "scripts": {},
+  "scripts": {
+    "tsc-alias": "tsc-alias -p tsconfig.app.json"
+  },
+  "type": "module",
   "version": "0.1.0"
 }

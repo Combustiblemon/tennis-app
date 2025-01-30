@@ -15,4 +15,5 @@
     "incremental": true,
 
   },
+  "exclude": ["**/dist/**"]
 }

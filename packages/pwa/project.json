@@ -9,7 +9,7 @@
       "cache": true,
       "executor": "@nx/next:build",
       "options": {
-        "outputPath": "dist/packages/pwa"
+        "outputPath": "dist/pwa"
       },
       "outputs": [
         "{options.outputPath}"

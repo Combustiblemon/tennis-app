@@ -1,6 +1,8 @@
-import { credential, messaging } from 'firebase-admin';
+import firebaseAdmin from 'firebase-admin';
 import { initializeApp } from 'firebase-admin/app';
 import signale from 'signale';
+
+const { credential, messaging } = firebaseAdmin;
 
 export enum Topics {
   ADMIN = 'admin',
