@@ -48,8 +48,6 @@ export type User = mongoose.Document &
 export const UserSchema = new mongoose.Schema<User>({
   name: {
     type: String,
-    maxlength: [60, 'User name cannot be more than 60 characters'],
-    required: [true, 'Please add a User name'],
   },
   role: {
     type: String,
@@ -88,7 +86,7 @@ export const UserSchema = new mongoose.Schema<User>({
   },
   accountType: {
     type: String,
-    enum: ['GOOGLE', 'PASSWORD'],
+    enum: ['GOOGLE', 'PASSWORD', 'EMAIL'],
   },
   loginCode: {
     code: {
@@ -143,17 +141,14 @@ UserSchema.methods.sanitize = function (): UserSanitized {
   });
 };
 
-UserSchema.methods.compareLoginCode = function (
-  date: Date,
-  code?: string,
-): boolean {
+UserSchema.methods.compareLoginCode = function (code?: string): boolean {
   if (!code) {
     return false;
   }
 
   return (
     code.trim().toLowerCase() === (this as User).loginCode?.code &&
-    date.getTime() <
+    new Date().getTime() <
       ((this as User).loginCode?.created.getTime() || 0) + LOGIN_CODE_LIFETIME
   );
 };

@@ -4,6 +4,7 @@ import cors from 'cors';
 import express from 'express';
 import signale from 'signale';
 
+import { isProduction } from './modules/common';
 import dbConnect from './modules/dbConnect';
 import { setupRoutes } from './modules/routes';
 
@@ -21,7 +22,7 @@ app.use(
         !origin ||
         !process.env.ALLOW_ORIGIN ||
         process.env.ALLOW_ORIGIN?.includes(findOrigin(origin)) ||
-        process.env.PRODUCTION !== 'true'
+        isProduction
       ) {
         callback(null, true);
       } else {

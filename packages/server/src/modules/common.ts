@@ -7,6 +7,8 @@ import { ReservationDataType } from '../models/Reservation';
 import { User } from '../models/User';
 import { APIResponse } from './responseTypes';
 
+export const isProduction = process.env.PRODUCTION?.toLowerCase() === 'true';
+
 export const formatZodError = (
   error: ZodError<unknown>,
 ): Array<

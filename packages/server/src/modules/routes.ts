@@ -2,7 +2,7 @@ import express, { Express, Router } from 'express';
 
 import adminCourt from '../handlers/admin/court';
 import adminReservation from '../handlers/admin/reservation';
-import { login, register } from '../handlers/auth';
+import { login, logout, verifyLogin } from '../handlers/auth';
 import court from '../handlers/court';
 import reservation from '../handlers/reservation';
 import user from '../handlers/user';
@@ -12,9 +12,9 @@ const setupAuthGroup = (app: Express) => {
   const auth = express.Router({ mergeParams: true });
   app.use('/auth', auth);
   {
-    auth.get('/session');
+    auth.get('/logout', logout);
+    auth.post('/verifyLogin', verifyLogin);
     auth.post('/login', login);
-    auth.post('/register', register);
   }
 };
 
