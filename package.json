@@ -8,6 +8,7 @@
   "scripts": {
     "---------------Server---------------": "--------------------------------",
     "server:serve": "nx serve server",
+    "server:dev": "nx serveDev server",
     "server:build": "nx build server",
     "server:test": "nx test server",
     "server:lint": "nx lint server",

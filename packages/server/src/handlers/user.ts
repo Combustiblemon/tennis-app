@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 
 import UserModel from '../models/User';
-import { authUserHelper, onError, onSuccess } from '../modules/common';
+import { authUserHelper, ERRORS, onError, onSuccess } from '../modules/common';
+import { ServerError } from '../modules/error';
 
 const updateOne = async (req: Request, res: Response) => {
   const { user } = authUserHelper(req);
@@ -16,7 +17,9 @@ const updateOne = async (req: Request, res: Response) => {
   try {
     name = z.string().min(1).max(60).parse(req.body);
   } catch (error) {
-    return res.status(400).json(onError(error as Error, 'user/id', 'PUT'));
+    throw new ServerError({
+      error: ERRORS.INVALID_DATA,
+    });
   }
 
   await UserModel.findByIdAndUpdate(user._id, { name });

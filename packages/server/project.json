@@ -43,6 +43,15 @@
         "command": "node dist/server/src/index.js"
       }
     },
+    "serveDev": {
+      "dependsOn": [
+        "server:build"
+      ],
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node --inspect dist/server/src/index.js"
+      }
+    },
     "serveOld": {
       "configurations": {
         "development": {

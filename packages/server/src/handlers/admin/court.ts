@@ -5,131 +5,158 @@ import Court, {
   CourtValidator,
   CourtValidatorPartial,
 } from '../../models/Court';
-import { Errors, formatDate, onError, onSuccess } from '../../modules/common';
+import { ERRORS, formatDate, onSuccess } from '../../modules/common';
+import { ServerError } from '../../modules/error';
 
 const getMany = async (req: Request, res: Response) => {
-  try {
-    const ids =
-      // should never split, just making it an array easily
-      z.string().safeParse(req.query.id).data?.split('&a!asd') ||
-      z.array(z.string()).safeParse(req.query.id).data;
+  const ids =
+    // should never split, just making it an array easily
+    z.string().safeParse(req.query.id).data?.split('&a!asd') ||
+    z.array(z.string()).safeParse(req.query.id).data;
 
-    if (!!req.query.id && !ids) {
-      return res.status(400).json(
-        onError(new Error(Errors.INVALID_QUERY), 'reservation', 'GET', {
-          query: 'id',
-        }),
-      );
-    }
-
-    const filter: Record<string, unknown> = {};
-
-    if (ids) {
-      filter._id = { $in: ids };
-    }
-
-    const courts = await Court.find({}).lean();
-
-    res.status(200).json(onSuccess(courts, 'courts', 'GET'));
-  } catch (error) {
-    res.status(500).json(onError(error as Error, 'courts', 'GET'));
+  if (!!req.query.id && !ids) {
+    throw new ServerError({
+      error: ERRORS.INVALID_QUERY,
+      operation: req.method as 'GET',
+      status: 400,
+      endpoint: 'reservations',
+      data: {
+        query: 'id',
+      },
+    });
   }
+
+  const filter: Record<string, unknown> = {};
+
+  if (ids) {
+    filter._id = { $in: ids };
+  }
+
+  const courts = await Court.find({}).lean();
+
+  res.status(200).json(onSuccess(courts, 'courts', 'GET'));
 };
 
 const postOne = async (req: Request, res: Response) => {
+  let courtData: z.infer<typeof CourtValidator>;
+
   try {
-    let courtData: z.infer<typeof CourtValidator>;
-
-    try {
-      courtData = CourtValidator.parse(req.body);
-    } catch (error) {
-      return res.status(400).json(onError(error as Error, 'courts', 'POST'));
-    }
-
-    const court = await Court.create(courtData);
-
-    res.status(201).json(onSuccess(court, 'courts', 'POST'));
+    courtData = CourtValidator.parse(req.body);
   } catch (error) {
-    res.status(500).json(onError(error as Error, 'courts', 'POST'));
+    throw new ServerError({
+      error: ERRORS.INVALID_DATA,
+      operation: req.method as 'GET',
+      status: 400,
+      endpoint: 'reservations',
+      data: {
+        error,
+      },
+    });
   }
+
+  const court = await Court.create(courtData);
+
+  res.status(201).json(onSuccess(court, 'courts', 'POST'));
 };
 
 const updateOne = async (req: Request, res: Response) => {
-  try {
-    const id = z.string().safeParse(req.query.id).data;
+  const id = z.string().safeParse(req.query.id).data;
 
-    if (!id) {
-      return res.status(400).json(
-        onError(new Error(Errors.INVALID_QUERY), 'reservation', 'GET', {
-          query: 'id',
-        }),
-      );
-    }
-
-    let data: z.infer<typeof CourtValidatorPartial>;
-
-    try {
-      data = CourtValidatorPartial.parse(req.body);
-    } catch (error) {
-      return res.status(400).json(onError(error as Error, 'courts/id', 'PUT'));
-    }
-
-    if (data.reservationsInfo?.reservedTimes?.length) {
-      const today = formatDate(new Date()).split('T')[0];
-
-      data.reservationsInfo.reservedTimes =
-        data.reservationsInfo.reservedTimes.map((reser) => {
-          if (reser.datesNotApplied) {
-            reser.datesNotApplied = reser.datesNotApplied.filter(
-              (d) => d >= today,
-            );
-          }
-
-          return reser;
-        });
-    }
-
-    const court = await Court.findByIdAndUpdate(id, data, {
-      new: true,
-      runValidators: true,
+  if (!id) {
+    throw new ServerError({
+      error: ERRORS.INVALID_QUERY,
+      operation: req.method as 'GET',
+      status: 400,
+      endpoint: 'reservations',
+      data: {
+        query: 'id',
+      },
     });
-
-    if (!court) {
-      res
-        .status(404)
-        .json(onError(new Error('No court found'), 'courts/id', 'PUT'));
-    }
-
-    res.status(200).json(onSuccess(court, 'courts/id', 'PUT'));
-  } catch (error) {
-    res.status(500).json(onError(error as Error, 'courts/id', 'PUT'));
   }
+
+  let data: z.infer<typeof CourtValidatorPartial>;
+
+  try {
+    data = CourtValidatorPartial.parse(req.body);
+  } catch (error) {
+    throw new ServerError({
+      error: ERRORS.INVALID_DATA,
+      operation: req.method as 'GET',
+      status: 400,
+      endpoint: 'reservations',
+      data: {
+        error,
+      },
+    });
+  }
+
+  if (data.reservationsInfo?.reservedTimes?.length) {
+    const today = formatDate(new Date()).split('T')[0];
+
+    data.reservationsInfo.reservedTimes =
+      data.reservationsInfo.reservedTimes.map((reser) => {
+        if (reser.datesNotApplied) {
+          reser.datesNotApplied = reser.datesNotApplied.filter(
+            (d) => d >= today,
+          );
+        }
+
+        return reser;
+      });
+  }
+
+  const court = await Court.findByIdAndUpdate(id, data, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!court) {
+    throw new ServerError({
+      error: ERRORS.RESOURCE_NOT_FOUND,
+      operation: req.method as 'GET',
+      status: 404,
+      endpoint: 'courts',
+      data: {
+        resource: 'court',
+        _id: id,
+      },
+    });
+  }
+
+  res.status(200).json(onSuccess(court, 'courts/id', 'PUT'));
 };
 
 const deleteOne = async (req: Request, res: Response) => {
-  try {
-    const id = z.string().safeParse(req.query.id).data;
+  const id = z.string().safeParse(req.query.id).data;
 
-    if (!id) {
-      return res.status(400).json(
-        onError(new Error(Errors.INVALID_QUERY), 'reservation', 'GET', {
-          query: 'id',
-        }),
-      );
-    }
-
-    const deletedCourt = await Court.deleteOne({ _id: id });
-
-    if (!deletedCourt) {
-      return res
-        .status(404)
-        .json(onError(new Error('No court found'), 'courts/id', 'DELETE'));
-    }
-
-    res.status(200).json(onSuccess(deletedCourt, 'courts/id', 'DELETE'));
-  } catch (error) {
-    res.status(500).json(onError(error as Error, 'courts/id', 'DELETE'));
+  if (!id) {
+    throw new ServerError({
+      error: ERRORS.INVALID_QUERY,
+      operation: req.method as 'GET',
+      status: 400,
+      endpoint: 'reservations',
+      data: {
+        query: 'id',
+      },
+    });
   }
+
+  const deletedCourt = await Court.deleteOne({ _id: id });
+
+  if (!deletedCourt) {
+    throw new ServerError({
+      error: ERRORS.RESOURCE_NOT_FOUND,
+      operation: req.method as 'GET',
+      status: 404,
+      endpoint: 'courts',
+      data: {
+        resource: 'court',
+        _id: id,
+      },
+    });
+  }
+
+  res.status(200).json(onSuccess(deletedCourt, 'courts/id', 'DELETE'));
 };
 
 export default {

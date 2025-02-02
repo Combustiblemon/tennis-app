@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
+import signale from 'signale';
 import { z } from 'zod';
 
 import Court from '../models/Court';
-import { Errors, onError, onSuccess } from '../modules/common';
+import { ERRORS, onError, onSuccess } from '../modules/common';
+import { ServerError } from '../modules/error';
 
 const getOne = async (req: Request, res: Response) => {
   const id =
@@ -10,27 +12,41 @@ const getOne = async (req: Request, res: Response) => {
     z.array(z.string()).safeParse(req.query.id).data;
 
   if (!!req.query.id && !id) {
-    return res.status(400).json(
-      onError(new Error(Errors.INVALID_QUERY), 'reservation', 'GET', {
+    throw new ServerError({
+      error: ERRORS.INVALID_QUERY,
+      operation: req.method as 'GET',
+      status: 400,
+      endpoint: 'reservation',
+      data: {
         query: 'id',
-      }),
-    );
+      },
+    });
   }
 
   try {
     const court = await Court.findById(id);
 
     if (!court) {
-      return res
-        .status(404)
-        .json(
-          onError(new Error(Errors.RESOURCE_NOT_FOUND), 'courts/id', 'GET'),
-        );
+      throw new ServerError({
+        error: ERRORS.RESOURCE_NOT_FOUND,
+        operation: req.method,
+        status: 404,
+        endpoint: 'courts',
+        data: {
+          resource: 'court',
+        },
+      });
     }
-
-    res.status(200).json(onSuccess(court, 'courts/id', 'GET'));
+    return res.status(200).json(onSuccess(court, 'courts/id', 'GET'));
   } catch (error) {
-    res.status(500).json(onError(error as Error, 'courts/id', 'GET'));
+    signale.error(error);
+
+    throw new ServerError({
+      error: ERRORS.INTERNAL_SERVER_ERROR,
+      operation: req.method,
+      status: 500,
+      endpoint: 'courts',
+    });
   }
 };
 
@@ -40,7 +56,14 @@ const getMany = async (req: Request, res: Response) => {
 
     res.status(200).json(onSuccess(courts, 'courts', 'GET'));
   } catch (error) {
-    res.status(500).json(onError(error as Error, 'courts', 'GET'));
+    signale.error(error);
+
+    throw new ServerError({
+      error: ERRORS.INTERNAL_SERVER_ERROR,
+      operation: req.method,
+      status: 500,
+      endpoint: 'courts',
+    });
   }
 };
 

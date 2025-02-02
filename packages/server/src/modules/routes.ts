@@ -80,8 +80,9 @@ const setupAuthorizedGroup = (app: Express) => {
     }
 
     const users = express.Router({ mergeParams: true });
-    authorized.use('/users', reservations);
+    authorized.use('/user', reservations);
     {
+      users.get('/', user.getCurrent)
       users.put('/', user.updateOne);
     }
   }

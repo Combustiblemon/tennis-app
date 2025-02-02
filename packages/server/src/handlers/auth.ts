@@ -7,12 +7,12 @@ import { z } from 'zod';
 
 import UserModel, { User } from '../models/User';
 import {
-  Errors,
+  ERRORS,
   isProduction,
-  onError,
   onSuccess,
   sessionCookie,
 } from '../modules/common';
+import { ServerError } from '../modules/error';
 import { subscribeUser } from '../modules/notifications';
 
 const loginValidator = z.object({
@@ -24,9 +24,12 @@ export const login = async (req: Request, res: Response) => {
 
   if (!result.success) {
     signale.error('Error parsing credentials', result.error);
-    return res
-      .status(400)
-      .json(onError(new Error(Errors.INVALID_CREDENTIALS), 'login'));
+    throw new ServerError({
+      error: ERRORS.INVALID_CREDENTIALS,
+      operation: req.method as 'GET',
+      status: 400,
+      endpoint: 'login',
+    });
   }
 
   const data = result.data;
@@ -42,9 +45,12 @@ export const login = async (req: Request, res: Response) => {
   } catch (error) {
     signale.error('Error finding user', error);
 
-    return res
-      .status(500)
-      .json(onError(new Error(Errors.INTERNAL_SERVER_ERROR), 'login'));
+    throw new ServerError({
+      error: ERRORS.INTERNAL_SERVER_ERROR,
+      operation: req.method as 'GET',
+      status: 500,
+      endpoint: 'login',
+    });
   }
 
   if (!user) {
@@ -74,9 +80,12 @@ export const login = async (req: Request, res: Response) => {
   } catch (err) {
     signale.error(err);
 
-    return res
-      .status(500)
-      .json(onError(new Error(Errors.INTERNAL_SERVER_ERROR), 'login'));
+    throw new ServerError({
+      error: ERRORS.INTERNAL_SERVER_ERROR,
+      operation: req.method as 'GET',
+      status: 500,
+      endpoint: 'login',
+    });
   }
 };
 
@@ -91,9 +100,12 @@ export const verifyLogin = async (req: Request, res: Response) => {
 
   if (!result.success) {
     signale.error('Error parsing credentials', result.error);
-    return res
-      .status(400)
-      .json(onError(new Error(Errors.INVALID_CREDENTIALS), 'login'));
+    throw new ServerError({
+      error: ERRORS.INVALID_CREDENTIALS,
+      operation: req.method as 'GET',
+      status: 400,
+      endpoint: 'verifyLogin',
+    });
   }
 
   const { email, FCMToken, loginCode } = result.data;
@@ -107,21 +119,30 @@ export const verifyLogin = async (req: Request, res: Response) => {
   } catch (error) {
     signale.error('Error finding user', error);
 
-    return res
-      .status(500)
-      .json(onError(new Error(Errors.INTERNAL_SERVER_ERROR), 'login'));
+    throw new ServerError({
+      error: ERRORS.INTERNAL_SERVER_ERROR,
+      operation: req.method as 'GET',
+      status: 500,
+      endpoint: 'verifyLogin',
+    });
   }
 
   if (!user) {
-    return res
-      .status(400)
-      .json(onError(new Error(Errors.LOGIN_ERROR), 'login'));
+    throw new ServerError({
+      error: ERRORS.LOGIN_ERROR,
+      operation: req.method as 'GET',
+      status: 400,
+      endpoint: 'verifyLogin',
+    });
   }
 
   if (isProduction && !user.compareLoginCode(loginCode)) {
-    return res
-      .status(400)
-      .json(onError(new Error(Errors.LOGIN_ERROR), 'login'));
+    throw new ServerError({
+      error: ERRORS.LOGIN_ERROR,
+      operation: req.method as 'GET',
+      status: 400,
+      endpoint: 'verifyLogin',
+    });
   }
 
   signale.info('User logged in', user.email);
@@ -161,15 +182,18 @@ export const verifyLogin = async (req: Request, res: Response) => {
           _id: user._id.toString(),
           session,
         },
-        'login',
+        'verifyLogin',
       ),
     );
   } catch (err) {
     signale.error(err);
 
-    return res
-      .status(500)
-      .json(onError(new Error(Errors.INTERNAL_SERVER_ERROR), 'login'));
+    throw new ServerError({
+      error: ERRORS.INTERNAL_SERVER_ERROR,
+      operation: req.method as 'GET',
+      status: 500,
+      endpoint: 'verifyLogin',
+    });
   }
 };
 

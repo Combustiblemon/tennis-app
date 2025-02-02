@@ -6,6 +6,7 @@ import signale from 'signale';
 
 import { isProduction } from './modules/common';
 import dbConnect from './modules/dbConnect';
+import { errorHandler } from './modules/error';
 import { setupRoutes } from './modules/routes';
 
 const app = express();
@@ -39,6 +40,8 @@ app.use(compression());
 app.use(cookieParser(process.env.SECRET));
 
 setupRoutes(app);
+
+app.use(errorHandler);
 
 const port = process.env.PORT || 2000;
 

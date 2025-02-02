@@ -5,6 +5,7 @@ import { ZodError, ZodIssue } from 'zod';
 import { CourtDataType } from '../models/Court';
 import { ReservationDataType } from '../models/Reservation';
 import { User } from '../models/User';
+import { ServerError } from './error';
 import { APIResponse } from './responseTypes';
 
 export const isProduction = process.env.PRODUCTION?.toLowerCase() === 'true';
@@ -22,21 +23,13 @@ export const formatZodError = (
   }));
 };
 
-export const onError = (
-  error: Error | ZodError,
-  endpoint: string,
-  operation?: 'POST' | 'GET' | 'PUT' | 'DELETE',
-  data?: Record<string, unknown>,
-) => {
+export const onError = (error: ServerError) => {
   return {
     success: false as const,
-    endpoint,
-    errors:
-      error instanceof ZodError
-        ? formatZodError(error)
-        : [{ message: error.message }],
-    ...(operation ? { operation } : {}),
-    ...(data ? { data } : {}),
+    endpoint: error.endpoint,
+    errors: [{ message: error.error || error.message }],
+    operation: error.operation,
+    data: error.data,
   };
 };
 
@@ -71,7 +64,8 @@ export const sessionCookie = {
   },
 };
 
-export enum Errors {
+export enum ERRORS {
+  INVALID_DATA = 'invalid_data',
   INVALID_QUERY = 'invalid_query',
   UNEXPECTED_ERROR = 'unexpected_error',
   INVALID_CREDENTIALS = 'invalid_credentials',
@@ -88,6 +82,8 @@ export enum Errors {
   INVALID_PASSWORD = 'invalid_password',
   UNAUTHORIZED = 'unauthorized',
   RESOURCE_NOT_FOUND = 'resource_not_found',
+  RESERVATION_TIME_CONFLICT = 'reservation_time_conflict',
+  DATE_IN_THE_PAST = 'date_in_the_past',
 }
 
 export const addMinutesToTime = (time: string, minutes: number) =>

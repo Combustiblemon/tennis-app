@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from 'express';
 
 import UserModel from '../models/User';
-import { Errors, sessionCookie } from '../modules/common';
+import { ERRORS, onError, sessionCookie } from '../modules/common';
+import { ServerError } from '../modules/error';
 
 export const userAuth = async (
   req: Request,
@@ -15,8 +17,11 @@ export const userAuth = async (
   });
 
   if (!user) {
-    next(Errors.UNAUTHORIZED);
-    return;
+    throw new ServerError({
+      error: ERRORS.UNAUTHORIZED,
+      status: 400,
+      operation: req.method as 'GET',
+    });
   }
 
   req.user = user;
@@ -35,8 +40,11 @@ export const adminAuth = async (
   });
 
   if (!user || user.role !== 'ADMIN') {
-    next(Errors.UNAUTHORIZED);
-    return;
+    throw new ServerError({
+      error: ERRORS.UNAUTHORIZED,
+      status: 400,
+      operation: req.method as 'GET',
+    });
   }
 
   req.user = user;
