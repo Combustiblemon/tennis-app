@@ -4,8 +4,8 @@
     "composite": true,
     "noEmit": false,
     "outDir": "../../dist/server",
-    "module": "NodeNext",
-    "moduleResolution": "nodenext",
+    "module": "ES6",
+    "moduleResolution": "node",
     "types": ["jest", "node"]
   },
   "include": [

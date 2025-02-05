@@ -23,7 +23,7 @@ app.use(
         !origin ||
         !process.env.ALLOW_ORIGIN ||
         process.env.ALLOW_ORIGIN?.includes(findOrigin(origin)) ||
-        isProduction
+        !isProduction
       ) {
         callback(null, true);
       } else {
@@ -31,6 +31,7 @@ app.use(
         callback(new Error('Not allowed by CORS'));
       }
     },
+    credentials: true,
   }),
 );
 

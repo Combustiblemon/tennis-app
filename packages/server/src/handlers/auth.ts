@@ -147,54 +147,41 @@ export const verifyLogin = async (req: Request, res: Response) => {
 
   signale.info('User logged in', user.email);
 
-  try {
-    const session = nanoid();
+  const session = nanoid();
 
-    user.session = session;
+  user.session = session;
 
-    if (FCMToken && FCMToken !== 'undefined') {
-      if (user.FCMTokens) {
-        user.FCMTokens.push(FCMToken);
-        user.FCMTokens = Array.from(new Set(user.FCMTokens));
-      } else {
-        user.FCMTokens = [FCMToken];
-      }
+  if (FCMToken && FCMToken !== 'undefined') {
+    if (user.FCMTokens) {
+      user.FCMTokens.push(FCMToken);
+      user.FCMTokens = Array.from(new Set(user.FCMTokens));
+    } else {
+      user.FCMTokens = [FCMToken];
     }
-
-    if (FCMToken) {
-      subscribeUser(user.role, [FCMToken]);
-    }
-
-    user.loginCode = undefined;
-
-    await user.save();
-
-    res.cookie('session', user.session, {
-      httpOnly: true,
-    });
-
-    return res.status(200).json(
-      onSuccess(
-        {
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          _id: user._id.toString(),
-          session,
-        },
-        'verifyLogin',
-      ),
-    );
-  } catch (err) {
-    signale.error(err);
-
-    throw new ServerError({
-      error: ERRORS.INTERNAL_SERVER_ERROR,
-      operation: req.method as 'GET',
-      status: 500,
-      endpoint: 'verifyLogin',
-    });
   }
+
+  if (FCMToken) {
+    subscribeUser(user.role, [FCMToken]);
+  }
+
+  user.loginCode = undefined;
+
+  sessionCookie.set(res, session);
+
+  await user.save();
+
+  return res.status(200).json(
+    onSuccess(
+      {
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        _id: user._id.toString(),
+        session,
+      },
+      'verifyLogin',
+    ),
+  );
 };
 
 export const logout = (req: Request, res: Response) => {

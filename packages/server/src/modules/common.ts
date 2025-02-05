@@ -54,6 +54,7 @@ export const sessionCookie = {
 
     res.cookie('session', session, {
       httpOnly: true,
+      maxAge: 120 * 24 * 60 * 60 * 1000,
     });
   },
   get: (req: Request): string | undefined => {

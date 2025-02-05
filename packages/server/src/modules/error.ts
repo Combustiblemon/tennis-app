@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { ErrorRequestHandler } from 'express';
+import { ErrorRequestHandler, NextFunction, Request, Response } from 'express';
 import signale from 'signale';
 
 import { ERRORS, onError } from './common';
@@ -65,3 +65,9 @@ export const errorHandler: ErrorRequestHandler = (
   signale.error(err);
   res.status(500).json(onError(error));
 };
+
+export const asyncHandler =
+  (fn: (req: Request, res: Response, next: NextFunction) => unknown) =>
+  (req: Request, res: Response, next: NextFunction) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };

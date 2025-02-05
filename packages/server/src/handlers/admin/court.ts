@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import signale from 'signale';
 import { z } from 'zod';
 
 import Court, {
@@ -14,7 +15,7 @@ const getMany = async (req: Request, res: Response) => {
     z.string().safeParse(req.query.id).data?.split('&a!asd') ||
     z.array(z.string()).safeParse(req.query.id).data;
 
-  if (!!req.query.id && !ids) {
+  if (req.query.id && !ids) {
     throw new ServerError({
       error: ERRORS.INVALID_QUERY,
       operation: req.method as 'GET',
@@ -60,7 +61,7 @@ const postOne = async (req: Request, res: Response) => {
 };
 
 const updateOne = async (req: Request, res: Response) => {
-  const id = z.string().safeParse(req.query.id).data;
+  const id = z.string().safeParse(req.params.id).data;
 
   if (!id) {
     throw new ServerError({

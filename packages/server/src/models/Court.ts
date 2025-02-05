@@ -92,5 +92,8 @@ export const CourtSchema = new mongoose.Schema<CourtType>({
   },
 });
 
-export default (mongoose.models.Court as mongoose.Model<CourtType>) ||
+const CourtModel =
+  (mongoose.models.Court as mongoose.Model<CourtType>) ||
   mongoose.model<CourtType>('Court', CourtSchema);
+
+export default CourtModel;

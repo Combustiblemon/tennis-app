@@ -13,6 +13,7 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "composite": true,
-    "noEmit": false
+    "noEmit": false,
+    "experimentalDecorators": true
   }
 }

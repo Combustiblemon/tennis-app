@@ -64,6 +64,7 @@ module.exports = [
         1,
         { caseSensitive: false },
       ],
+      'no-unreachable': 'warn',
     },
   },
 ];

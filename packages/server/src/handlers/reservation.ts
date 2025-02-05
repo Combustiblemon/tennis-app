@@ -1,4 +1,6 @@
+import { error } from 'console';
 import { Request, Response } from 'express';
+import signale from 'signale';
 import { z } from 'zod';
 
 import Court, { CourtType } from '../models/Court';
@@ -187,10 +189,18 @@ const updateOne = async (req: Request, res: Response) => {
 
   reservation.set(data);
 
-  sendMessageToTopic(Topics.ADMIN, {
-    title: 'Αλλαγή κράτησης',
-    body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.name || ''}`,
-  });
+  try {
+    sendMessageToTopic(Topics.ADMIN, {
+      title: 'Αλλαγή κράτησης',
+      body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.name || ''}`,
+    });
+  } catch (err: unknown) {
+    signale.debug(
+      'error sending notification',
+      (err as Error).message,
+      (err as Error).stack,
+    );
+  }
 
   await reservation.save();
 
@@ -272,16 +282,24 @@ const postOne = async (req: Request, res: Response) => {
     owner: isAdmin ? data.owner || user._id : user._id,
   });
 
-  sendMessageToTopic(Topics.ADMIN, {
-    title: 'Νέα κράτηση',
-    body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.name || ''}`,
-  });
+  try {
+    sendMessageToTopic(Topics.ADMIN, {
+      title: 'Νέα κράτηση',
+      body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.name || ''}`,
+    });
+  } catch (err: unknown) {
+    signale.debug(
+      'error sending notification',
+      (err as Error).message,
+      (err as Error).stack,
+    );
+  }
 
   res.status(201).json(onSuccess(reservation, 'reservations', 'POST'));
 };
 
 const getMany = async (req: Request, res: Response) => {
-  const { isAdmin, user } = authUserHelper(req);
+  const { user } = authUserHelper(req);
 
   if (!user) {
     return;
@@ -305,9 +323,10 @@ const getMany = async (req: Request, res: Response) => {
     });
   }
 
-  const offset = z.number().min(0).safeParse(req.query.offset).data;
+  const offset = z.number().min(0).safeParse(Number(req.query.offset)).data;
 
-  if (!!req.query.offset && !offset) {
+  if (!!req.query.offset && offset !== 0 && !offset) {
+    signale.debug({ offset, off: req.query.offset });
     throw new ServerError({
       error: ERRORS.INVALID_QUERY,
       operation: req.method as 'GET',
@@ -369,21 +388,20 @@ const getMany = async (req: Request, res: Response) => {
 
     return res.status(200).json(onSuccess(reservations, 'reservations', 'GET'));
   }
+
   /* find all the data in our database */
   const reservationsData = await ReservationModel.find({
-    ...dateQuery,
-    ...(user.role !== 'ADMIN' ? { owner: user._id } : {}),
+    ...(date ? dateQuery : {}),
+    owner: user._id.toString(),
   }).lean();
 
-  const reservationsSanitized = isAdmin
-    ? reservationsData
-    : reservationsData.map((r) => {
-        if (r.owner?.toString() === user._id.toString()) {
-          return r;
-        }
+  const reservationsSanitized = reservationsData.map((r) => {
+    if (r.owner?.toString() === user._id.toString()) {
+      return r;
+    }
 
-        return r.sanitize();
-      });
+    return r.sanitize();
+  });
 
   return res
     .status(200)
@@ -448,12 +466,20 @@ const deleteMany = async (req: Request, res: Response) => {
       _id: { $in: reservations.map((r) => r._id) },
     });
 
-    reservations.forEach((reservation) => {
-      sendMessageToTopic(Topics.ADMIN, {
-        title: 'Διαγραφή κράτησης',
-        body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${(reservation.court as unknown as CourtType).name}\nΌνομα: ${user.name || ''}`,
+    try {
+      reservations.forEach((reservation) => {
+        sendMessageToTopic(Topics.ADMIN, {
+          title: 'Διαγραφή κράτησης',
+          body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${(reservation.court as unknown as CourtType).name}\nΌνομα: ${user.name || ''}`,
+        });
       });
-    });
+    } catch (err: unknown) {
+      signale.debug(
+        'error sending notification',
+        (err as Error).message,
+        (err as Error).stack,
+      );
+    }
 
     res.status(200).json(onSuccess(deletedCount, 'reservations', 'DELETE'));
   }

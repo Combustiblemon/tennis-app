@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import signale from 'signale';
 import { z } from 'zod';
 
 import Court from '../../models/Court';
@@ -18,7 +19,7 @@ import { sendMessageToTopic, Topics } from '../../modules/notifications';
 const getMany = async (req: Request, res: Response) => {
   const date = z.string().safeParse(req.query.date).data;
 
-  if (!date) {
+  if (req.query.date && !date) {
     throw new ServerError({
       error: ERRORS.INVALID_QUERY,
       operation: req.method as 'GET',
@@ -30,9 +31,9 @@ const getMany = async (req: Request, res: Response) => {
     });
   }
 
-  const offset = z.string().safeParse(req.query.offset).data;
+  const offset = z.string().safeParse(Number(req.query.offset)).data;
 
-  if (!offset) {
+  if (req.query.offset && !offset) {
     throw new ServerError({
       error: ERRORS.INVALID_QUERY,
       operation: req.method as 'GET',
@@ -232,10 +233,18 @@ const createOne = async (req: Request, res: Response) => {
     owner: data.owner || user._id,
   });
 
-  sendMessageToTopic(Topics.ADMIN, {
-    title: 'Νέα κράτηση',
-    body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.name || ''}`,
-  });
+  try {
+    sendMessageToTopic(Topics.ADMIN, {
+      title: 'Νέα κράτηση',
+      body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.name || ''}`,
+    });
+  } catch (err: unknown) {
+    signale.debug(
+      'error sending notification',
+      (err as Error).message,
+      (err as Error).stack,
+    );
+  }
 
   res.status(201).json(onSuccess(reservation, 'reservations', 'POST'));
 };

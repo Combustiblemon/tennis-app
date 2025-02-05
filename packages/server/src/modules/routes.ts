@@ -4,17 +4,19 @@ import adminCourt from '../handlers/admin/court';
 import adminReservation from '../handlers/admin/reservation';
 import { login, logout, verifyLogin } from '../handlers/auth';
 import court from '../handlers/court';
+import notification from '../handlers/notification';
 import reservation from '../handlers/reservation';
 import user from '../handlers/user';
 import { adminAuth, userAuth } from '../middleware/auth';
+import { asyncHandler } from './error';
 
 const setupAuthGroup = (app: Express) => {
   const auth = express.Router({ mergeParams: true });
   app.use('/auth', auth);
   {
-    auth.get('/logout', logout);
-    auth.post('/verifyLogin', verifyLogin);
-    auth.post('/login', login);
+    auth.get('/logout', asyncHandler(logout));
+    auth.post('/verifyLogin', asyncHandler(verifyLogin));
+    auth.post('/login', asyncHandler(login));
   }
 };
 
@@ -25,26 +27,26 @@ const setupAdminGroup = (app: Router) => {
   admin.use(adminAuth);
   {
     const reservations = express.Router({ mergeParams: true });
-    app.use('/reservations', reservations);
+    admin.use('/reservations', reservations);
     {
-      reservations.get('/', adminReservation.getMany);
-      reservations.post('/', adminReservation.createOne);
-      reservations.get('/:id', adminReservation.getOne);
-      reservations.delete('/', adminReservation.deleteMany);
+      reservations.get('/', asyncHandler(adminReservation.getMany));
+      reservations.post('/', asyncHandler(adminReservation.createOne));
+      reservations.get('/:id', asyncHandler(adminReservation.getOne));
+      reservations.delete('/', asyncHandler(adminReservation.deleteMany));
     }
 
     const courts = express.Router({ mergeParams: true });
-    app.use('/courts', courts);
+    admin.use('/courts', courts);
     {
-      courts.get('/', adminCourt.getMany);
-      courts.post('/', adminCourt.postOne);
-      courts.get('/:ids', adminCourt.getMany);
-      courts.put('/:id', adminCourt.updateOne);
-      courts.delete('/:id', adminCourt.deleteOne);
+      courts.get('/', asyncHandler(adminCourt.getMany));
+      courts.post('/', asyncHandler(adminCourt.postOne));
+      courts.get('/:ids', asyncHandler(adminCourt.getMany));
+      courts.put('/:id', asyncHandler(adminCourt.updateOne));
+      courts.delete('/:id', asyncHandler(adminCourt.deleteOne));
     }
 
     // const users = express.Router({ mergeParams: true });
-    // app.use('/users', users);
+    // admin.use('/users', users);
     // {
     //   users.get('/');
     //   users.put('/');
@@ -65,25 +67,31 @@ const setupAuthorizedGroup = (app: Express) => {
     const reservations = express.Router({ mergeParams: true });
     authorized.use('/reservations', reservations);
     {
-      reservations.get('/', reservation.getMany);
-      reservations.post('/', reservation.postOne);
-      reservations.get('/:id', reservation.getOne);
-      reservations.put('/:id', reservation.updateOne);
-      reservations.delete('/:id', reservation.deleteMany);
+      reservations.get('/', asyncHandler(reservation.getMany));
+      reservations.post('/', asyncHandler(reservation.postOne));
+      reservations.get('/:id', asyncHandler(reservation.getOne));
+      reservations.put('/:id', asyncHandler(reservation.updateOne));
+      reservations.delete('/', asyncHandler(reservation.deleteMany));
     }
 
     const courts = express.Router({ mergeParams: true });
-    authorized.use('/courts', reservations);
+    authorized.use('/courts', courts);
     {
-      courts.get('/', court.getOne);
-      courts.get('/:id', court.getMany);
+      courts.get('/', asyncHandler(court.getMany));
+      courts.get('/:id', asyncHandler(court.getOne));
     }
 
     const users = express.Router({ mergeParams: true });
-    authorized.use('/user', reservations);
+    authorized.use('/user', users);
     {
-      users.get('/', user.getCurrent)
-      users.put('/', user.updateOne);
+      users.get('/', asyncHandler(user.getCurrent));
+      users.put('/', asyncHandler(user.updateOne));
+    }
+
+    const notifications = express.Router({ mergeParams: true });
+    authorized.use('/notifications', notifications);
+    {
+      notifications.put('/', asyncHandler(notification.updateToken));
     }
   }
 

@@ -43,6 +43,7 @@ export type User = mongoose.Document &
     compareSessions: (session?: string) => boolean;
     compareLoginCode: (code?: string) => boolean;
     sanitize: () => UserSanitized;
+    addToken: (token: string) => boolean;
   };
 
 export const UserSchema = new mongoose.Schema<User>({
@@ -125,6 +126,20 @@ UserSchema.methods.compareSessions = function (session?: string) {
   }
 
   return session === (this as User).session;
+};
+
+UserSchema.methods.addToken = function (token?: string) {
+  if (!token) {
+    return false;
+  }
+
+  if ((this as User).FCMTokens) {
+    (this as User).FCMTokens?.push(token);
+  } else {
+    (this as User).FCMTokens = [token];
+  }
+
+  return true;
 };
 
 UserSchema.methods.sanitize = function (): UserSanitized {

@@ -5,7 +5,8 @@
     "outDir": "../../dist/server",
     "module": "ES6",
     "types": ["node", "express"],
-    "noEmit": false
+    "noEmit": false,
+    "experimentalDecorators": true
   },
   "tsc-alias":{
     "resolveFullPaths": true
