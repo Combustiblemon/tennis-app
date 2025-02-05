@@ -22,7 +22,7 @@ export const ReservationValidatorPartial = ReservationValidator.deepPartial();
 
 type ReservationSanitized = Pick<
   ReservationType,
-  'type' | 'court' | 'datetime' | 'duration'
+  'type' | 'court' | 'datetime' | 'duration' | 'notes'
 >;
 
 export type ReservationDataType = Omit<
@@ -81,6 +81,7 @@ ReservationSchema.methods.sanitize = function (): ReservationSanitized {
         datetime: ret.datetime,
         duration: ret.duration,
         type: ret.type,
+        notes: ret.notes,
       }) satisfies ReservationSanitized,
   });
 };

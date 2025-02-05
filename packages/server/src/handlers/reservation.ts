@@ -219,6 +219,7 @@ const postOne = async (req: Request, res: Response) => {
     datetime: true,
     people: true,
     duration: true,
+    notes: true,
     ...(isAdmin ? { owner: true } : {}),
   });
 
