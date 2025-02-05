@@ -17,7 +17,7 @@ const topicMap = {
 
 let app = false;
 
-const initApp = () => {
+export const initFirebaseApp = () => {
   try {
     if (!app) {
       initializeApp({
@@ -50,7 +50,7 @@ export const sendMessageToTokens = (
     return;
   }
 
-  initApp();
+  initFirebaseApp();
 
   // Send a message to the device corresponding to the provided
   // registration token.
@@ -72,7 +72,7 @@ export const sendMessageToTopic = (
   topic: Topics,
   data: Record<string, string>,
 ) => {
-  initApp();
+  initFirebaseApp();
 
   messaging()
     .send({
@@ -95,7 +95,7 @@ export const subscribeToTopic = async (
     return;
   }
 
-  initApp();
+  initFirebaseApp();
 
   if (typeof topic === 'string') {
     const res = await messaging().subscribeToTopic(tokens, topic);
@@ -148,7 +148,7 @@ export const unsubscribeFromTopic = async (
     return;
   }
 
-  initApp();
+  initFirebaseApp();
 
   if (typeof topic === 'string') {
     const res = await messaging().unsubscribeFromTopic(tokens, topic);

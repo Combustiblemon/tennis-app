@@ -1,4 +1,3 @@
-import { error } from 'console';
 import { Request, Response } from 'express';
 import signale from 'signale';
 import { z } from 'zod';

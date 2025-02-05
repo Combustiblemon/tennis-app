@@ -7,11 +7,14 @@ import signale from 'signale';
 import { isProduction } from './modules/common';
 import dbConnect from './modules/dbConnect';
 import { errorHandler } from './modules/error';
+import { initFirebaseApp } from './modules/notifications';
 import { setupRoutes } from './modules/routes';
 
 const app = express();
 
 dbConnect();
+
+initFirebaseApp();
 
 const findOrigin = (origin: string) =>
   new RegExp(/(?<=https:\/\/).*?(?=\/)/, '').exec(origin)?.[0] || '';
