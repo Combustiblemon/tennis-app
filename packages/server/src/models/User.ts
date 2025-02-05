@@ -13,13 +13,7 @@ export const UserValidator = z.object({
   accountType: z.enum(['GOOGLE', 'PASSWORD']).optional(),
 });
 
-type SanitizedUserFields =
-  | 'name'
-  | 'email'
-  | 'role'
-  | '_id'
-  | 'FCMTokens'
-  | 'session';
+type SanitizedUserFields = 'name' | 'email' | 'role' | '_id' | 'FCMTokens';
 
 export type UserDataType = z.infer<typeof UserValidator>;
 
@@ -151,7 +145,6 @@ UserSchema.methods.sanitize = function (): UserSanitized {
         role: ret.role,
         _id: ret._id,
         FCMTokens: ret.FCMToken,
-        session: ret.session,
       }) satisfies UserSanitized,
   });
 };

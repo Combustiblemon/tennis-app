@@ -89,10 +89,10 @@ const updateOne = async (req: Request, res: Response) => {
   }
 
   const id =
-    z.string().safeParse(req.query.id).data ||
-    z.array(z.string()).safeParse(req.query.id).data;
+    z.string().safeParse(req.params.id).data ||
+    z.array(z.string()).safeParse(req.params.id).data;
 
-  if (!!req.query.id && !id) {
+  if (!!req.params.id && !id) {
     throw new ServerError({
       error: ERRORS.INVALID_QUERY,
       operation: req.method as 'GET',
@@ -121,21 +121,8 @@ const updateOne = async (req: Request, res: Response) => {
     });
   }
 
-  const reservation = await ReservationModel.findOne({ _id: id });
-  const court = await Court.findOne({ _id: reservation?.court });
-
-  if (!court) {
-    throw new ServerError({
-      error: ERRORS.RESOURCE_NOT_FOUND,
-      operation: req.method as 'GET',
-      status: 404,
-      endpoint: 'reservations',
-      data: {
-        resource: 'court',
-        _id: reservation?.court,
-      },
-    });
-  }
+  const reservation = await ReservationModel.findById(id);
+  const court = await Court.findById(reservation?.court);
 
   if (!reservation) {
     throw new ServerError({
@@ -146,6 +133,19 @@ const updateOne = async (req: Request, res: Response) => {
       data: {
         resource: 'reservations',
         _id: id,
+      },
+    });
+  }
+
+  if (!court) {
+    throw new ServerError({
+      error: ERRORS.RESOURCE_NOT_FOUND,
+      operation: req.method as 'GET',
+      status: 404,
+      endpoint: 'reservations',
+      data: {
+        resource: 'court',
+        _id: reservation?.court,
       },
     });
   }
