@@ -12,7 +12,7 @@ import { setupRoutes } from './modules/routes';
 
 const app = express();
 
-dbConnect();
+await dbConnect();
 
 initFirebaseApp();
 
