@@ -41,15 +41,15 @@
       }
     },
     "dev": {
+      "dependsOn": [
+        "server:build"
+      ],
       "executor": "nx:run-script",
       "options": {
         "script": "dev"
       }
     },
-    "serve": {
-      "dependsOn": [
-        "server:build"
-      ],
+    "prod": {
       "executor": "nx:run-commands",
       "options": {
         "command": "node dist/server/src/index.js"

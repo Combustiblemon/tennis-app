@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "---------------Server---------------": "--------------------------------",
-    "server:serve": "nx serve server",
+    "server:prod": "nx prod server",
     "server:dev": "nx dev server",
     "server:debug": "nx debug server",
     "server:build": "nx build server",
