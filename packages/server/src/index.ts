@@ -6,15 +6,18 @@ import signale from 'signale';
 
 import { isProduction } from './modules/common';
 import dbConnect from './modules/dbConnect';
+import { testEmail } from './modules/email';
 import { errorHandler } from './modules/error';
 import { initFirebaseApp } from './modules/notifications';
 import { setupRoutes } from './modules/routes';
 
 const app = express();
 
-dbConnect();
+await dbConnect();
 
 initFirebaseApp();
+
+await testEmail();
 
 const findOrigin = (origin: string) =>
   new RegExp(/(?<=https:\/\/).*?(?=\/)/, '').exec(origin)?.[0] || '';
@@ -48,9 +51,10 @@ setupRoutes(app);
 app.use(errorHandler);
 
 const port = process.env.PORT || 2000;
+const ip = process.env.IP || 'localhost';
 
 const server = app.listen(port, () => {
-  signale.info(`Listening at http://localhost:${port}/`);
+  signale.info(`Listening at http://${ip}:${port}/`);
 });
 
 server.on('error', signale.error);
