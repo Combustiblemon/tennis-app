@@ -1,0 +1,56 @@
+.root {
+  &[data-variant='primary'] {
+    border-color: var(--color-turquoise);
+
+    .input {
+      cursor: pointer;
+
+      &:checked {
+        border-color: var(--color-turquoise);
+        background-color: var(--color-turquoise);
+      }
+
+      &:disabled {
+        background-color: transparent;
+        border-color: lightGray;
+      }
+
+      &[data-indeterminate='true'] {
+        background-color: transparent;
+        border-color: lightGray;
+      }
+    }
+
+    .label {
+      pointer-events: none;
+    }
+  }
+
+  &[data-variant='outlined'] {
+    border-color: var(--color-turquoise);
+
+    .input {
+      cursor: pointer;
+      background-color: transparent;
+
+      &:checked {
+        border-color: var(--color-turquoise);
+        background-color: var(--color-turquoise);
+      }
+
+      &:disabled {
+        background-color: transparent;
+        border-color: lightGray;
+      }
+
+      &[data-indeterminate='true'] {
+        background-color: transparent;
+        border-color: lightGray;
+      }
+    }
+
+    .label {
+      pointer-events: none;
+    }
+  }
+}

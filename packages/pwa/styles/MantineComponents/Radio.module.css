@@ -1,0 +1,29 @@
+.root {
+  &[data-variant='outline'] {
+    .radio {
+      cursor: pointer;
+      background-color: transparent;
+
+      &:checked {
+        border-color: var(--color-turquoise);
+      }
+
+      &:disabled {
+        border-color: lightgray;
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+    }
+
+    .icon {
+      color: var(--color-turquoise);
+      width: 11px;
+      height: 11px;
+      transform: translate(-1.45px, -1.6px);
+    }
+
+    .label {
+      pointer-events: none;
+    }
+  }
+}

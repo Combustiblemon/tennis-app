@@ -1,0 +1,71 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "defaultBase": "main",
+  "plugins": [
+    {
+      "options": {
+        "build": {
+          "configName": "tsconfig.lib.json",
+          "targetName": "build"
+        },
+        "typecheck": {
+          "targetName": "typecheck"
+        }
+      },
+      "plugin": "@nx/js/typescript"
+    },
+    {
+      "exclude": [
+        "packages/server/**"
+      ],
+      "options": {
+        "buildTargetName": "next:build",
+        "devTargetName": "next:dev",
+        "serveStaticTargetName": "serve-static",
+        "startTargetName": "next:start"
+      },
+      "plugin": "@nx/next/plugin"
+    },
+    {
+      "options": {
+        "targetName": "lint"
+      },
+      "plugin": "@nx/eslint/plugin"
+    },
+    {
+      "exclude": [
+        "packages/pwa/**"
+      ],
+      "options": {
+        "buildTargetName": "build",
+        "previewTargetName": "preview",
+        "serveTargetName": "serve"
+      },
+      "plugin": "@nx/webpack/plugin"
+    },
+    {
+      "exclude": [
+        "packages/server-e2e/**/*"
+      ],
+      "options": {
+        "targetName": "test"
+      },
+      "plugin": "@nx/jest/plugin"
+    }
+  ],
+  "targetDefaults": {
+    "@nx/js:swc": {
+      "cache": true,
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "default",
+        "^default"
+      ]
+    },
+    "lint": {
+      "cache": true
+    }
+  }
+}

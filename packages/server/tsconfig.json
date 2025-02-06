@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "files": ["./global.d.ts"],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ],
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "composite": true,
+    "noEmit": false,
+    "experimentalDecorators": true
+  }
+}

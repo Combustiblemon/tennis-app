@@ -1,0 +1,64 @@
+.root {
+  background-color: transparent;
+  border: 1px dashed var(--color-gray300);
+  height: 50px;
+
+  &[data-variant='icons'] {
+    height: 37.5px;
+
+    .control {
+      min-width: 30px;
+      max-width: 30px;
+      min-height: 30px;
+      max-height: 30px;
+      padding: 0 -2px;
+    }
+
+    .label {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: fit-content;
+    }
+
+    .innerLabel {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-right: -2px;
+      margin-bottom: -2px;
+    }
+  }
+
+  &[data-variant='fit'] {
+    .control {
+      min-width: fit-content;
+    }
+  }
+}
+
+.control {
+  min-width: 140px;
+  padding: 8px 24;
+}
+
+.label {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray900);
+
+  &[data-active='true'] {
+    color: var(--color-white);
+  }
+}
+
+.indicator {
+  box-shadow: none;
+  background-color: var(--color-turquoise);
+  border-radius: 5px;
+}
+
+.innerLabel {
+}

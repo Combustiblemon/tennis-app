@@ -1,0 +1,43 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "pwa",
+  "projectType": "application",
+  "sourceRoot": "packages/pwa",
+  "tags": [],
+  "targets": {
+    "build": {
+      "cache": true,
+      "executor": "@nx/next:build",
+      "options": {
+        "outputPath": "dist/pwa"
+      },
+      "outputs": [
+        "{options.outputPath}"
+      ]
+    },
+    "serve": {
+      "configurations": {
+        "development": {
+          "buildTarget": "pwa:build:development"
+        },
+        "production": {
+          "buildTarget": "pwa:build:production"
+        }
+      },
+      "defaultConfiguration": "development",
+      "dependsOn": [
+        "build"
+      ],
+      "executor": "@nx/next:server",
+      "options": {
+        "buildTarget": "pwa:build",
+        "runBuildTargetDependencies": false
+      }
+    },
+    "test": {
+      "options": {
+        "passWithNoTests": true
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "dependencies": {
+    "@swc-node/register": "^1.10.9",
+    "@swc/core": "^1.10.8",
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.5",
+    "cors": "^2.8.5",
+    "dayjs": "^1.11.13",
+    "express": "^5.0.1",
+    "firebase-admin": "^13.0.2",
+    "jose": "^5.9.6",
+    "jwt-decode": "^4.0.0",
+    "mailgun.js": "^11.1.0",
+    "mongoose": "^8.9.5",
+    "mongoose-tsgen": "^9.5.1",
+    "nanoid": "^5.0.9",
+    "signale": "^1.4.0",
+    "tslib": "^2.3.0",
+    "zod": "^3.24.1"
+  },
+  "name": "@tennis-app/server",
+  "private": true,
+  "scripts": {
+    "debug": "tsx watch --inspect ./src/index.ts",
+    "dev": "tsx watch ./src/index.ts",
+    "tsc-alias": "tsc-alias -p tsconfig.app.json"
+  },
+  "type": "module",
+  "version": "0.1.0"
+}

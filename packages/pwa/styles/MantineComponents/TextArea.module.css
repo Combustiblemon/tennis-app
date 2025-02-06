@@ -1,0 +1,5 @@
+.root {
+  .input {
+    padding: var(--spacing-md);
+  }
+}

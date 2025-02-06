@@ -1,0 +1,83 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "server",
+  "projectType": "application",
+  "sourceRoot": "packages/server/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "cache": true,
+      "dependsOn": [
+        "buildCode"
+      ],
+      "executor": "nx:run-script",
+      "options": {
+        "main": "packages/server/src/index.ts",
+        "outputPath": "dist/server",
+        "script": "tsc-alias",
+        "tsConfig": "packages/server/tsconfig.app.json"
+      },
+      "output": [
+        "dist/server"
+      ]
+    },
+    "buildCode": {
+      "cache": true,
+      "executor": "@nx/js:swc",
+      "options": {
+        "assets": [],
+        "main": "packages/server/src/index.ts",
+        "outputPath": "dist/server",
+        "tsConfig": "packages/server/tsconfig.app.json"
+      },
+      "outputs": [
+        "{options.outputPath}"
+      ]
+    },
+    "debug": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "debug"
+      }
+    },
+    "dev": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "dev"
+      }
+    },
+    "serve": {
+      "dependsOn": [
+        "server:build"
+      ],
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node dist/server/src/index.js"
+      }
+    },
+    "serveOld": {
+      "configurations": {
+        "development": {
+          "buildTarget": "server:build:development"
+        },
+        "production": {
+          "buildTarget": "server:build:production"
+        }
+      },
+      "defaultConfiguration": "development",
+      "dependsOn": [
+        "build"
+      ],
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "server:build",
+        "runBuildTargetDependencies": false
+      }
+    },
+    "test": {
+      "options": {
+        "passWithNoTests": true
+      }
+    }
+  }
+}

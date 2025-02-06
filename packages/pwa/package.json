@@ -1,0 +1,28 @@
+{
+  "dependencies": {
+    "@mantine/core": "^7.16.0",
+    "@mantine/dates": "^7.16.0",
+    "@mantine/hooks": "^7.16.0",
+    "@mantine/notifications": "^7.16.0",
+    "@swc-node/register": "^1.10.9",
+    "@swc/core": "^1.10.8",
+    "@tanstack/react-query": "^5.64.1",
+    "@tanstack/react-query-devtools": "^5.64.1",
+    "dayjs": "^1.11.13",
+    "next": "15.1.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router": "^7.1.1",
+    "zod": "^3.24.1",
+    "zustand": "^5.0.3"
+  },
+  "name": "@tennis-app/pwa",
+  "private": true,
+  "scripts": {
+    "build": "nx next:build",
+    "dev": "nx next:dev",
+    "lint": "next lint",
+    "start": "nx next:start"
+  },
+  "version": "0.1.0"
+}
