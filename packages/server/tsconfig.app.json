@@ -3,7 +3,6 @@
   "compilerOptions": {
     "composite": true,
     "outDir": "../../dist/server",
-    "module": "ES6",
     "types": ["node", "express"],
     "noEmit": false,
     "experimentalDecorators": true
