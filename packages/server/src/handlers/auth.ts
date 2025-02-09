@@ -178,11 +178,11 @@ export const verifyLogin = async (req: Request, res: Response) => {
   return res.status(200).json(
     onSuccess(
       {
-        name: user.name,
+        firstname: user.firstname,
+        lastname: user.lastname,
         email: user.email,
         role: user.role,
         _id: user._id.toString(),
-        session,
       },
       'verifyLogin',
     ),

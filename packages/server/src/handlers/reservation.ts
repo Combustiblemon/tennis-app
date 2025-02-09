@@ -191,7 +191,7 @@ const updateOne = async (req: Request, res: Response) => {
   try {
     sendMessageToTopic(Topics.ADMIN, {
       title: 'Αλλαγή κράτησης',
-      body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.name || ''}`,
+      body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.firstname || ''} ${user.lastname || ''}`,
     });
   } catch (err: unknown) {
     signale.debug(
@@ -285,7 +285,7 @@ const postOne = async (req: Request, res: Response) => {
   try {
     sendMessageToTopic(Topics.ADMIN, {
       title: 'Νέα κράτηση',
-      body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.name || ''}`,
+      body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.firstname || ''} ${user.lastname || ''}`,
     });
   } catch (err: unknown) {
     signale.debug(
@@ -470,7 +470,7 @@ const deleteMany = async (req: Request, res: Response) => {
       reservations.forEach((reservation) => {
         sendMessageToTopic(Topics.ADMIN, {
           title: 'Διαγραφή κράτησης',
-          body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${(reservation.court as unknown as CourtType).name}\nΌνομα: ${user.name || ''}`,
+          body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${(reservation.court as unknown as CourtType).name}\nΌνομα: ${user.firstname || ''} ${user.lastname || ''}`,
         });
       });
     } catch (err: unknown) {

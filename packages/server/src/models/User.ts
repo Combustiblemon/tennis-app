@@ -6,14 +6,21 @@ import z from 'zod';
 const LOGIN_CODE_LIFETIME = 10 * 60 * 1000;
 
 export const UserValidator = z.object({
-  name: z.string().max(60),
   role: z.enum(['ADMIN', 'USER']).default('USER'),
   email: z.string().email(),
   password: z.string().min(6).optional(),
   accountType: z.enum(['GOOGLE', 'PASSWORD']).optional(),
+  firstname: z.string().max(60).optional(),
+  lastname: z.string().max(60).optional(),
 });
 
-type SanitizedUserFields = 'name' | 'email' | 'role' | '_id' | 'FCMTokens';
+type SanitizedUserFields =
+  | 'firstname'
+  | 'lastname'
+  | 'email'
+  | 'role'
+  | '_id'
+  | 'FCMTokens';
 
 export type UserDataType = z.infer<typeof UserValidator>;
 
@@ -41,7 +48,10 @@ export type User = mongoose.Document &
   };
 
 export const UserSchema = new mongoose.Schema<User>({
-  name: {
+  firstname: {
+    type: String,
+  },
+  lastname: {
     type: String,
   },
   role: {
@@ -140,7 +150,8 @@ UserSchema.methods.sanitize = function (): UserSanitized {
   return (this as User).toObject({
     transform: (doc, ret) =>
       ({
-        name: ret.name,
+        firstname: ret.firstname,
+        lastname: ret.lastname,
         email: ret.email,
         role: ret.role,
         _id: ret._id,
