@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from 'express';
-import signale from 'signale';
 
 import UserModel from '../models/User';
 import { ERRORS, sessionCookie } from '../modules/common';

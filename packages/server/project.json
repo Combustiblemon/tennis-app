@@ -41,9 +41,6 @@
       }
     },
     "dev": {
-      "dependsOn": [
-        "server:build"
-      ],
       "executor": "nx:run-script",
       "options": {
         "script": "dev"

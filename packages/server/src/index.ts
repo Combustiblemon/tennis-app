@@ -6,11 +6,14 @@ import signale from 'signale';
 
 import { isProduction } from './modules/common';
 import dbConnect from './modules/dbConnect';
+import { initEmailClient } from './modules/email';
 import { errorHandler } from './modules/error';
 import { initFirebaseApp } from './modules/notifications';
 import { setupRoutes } from './modules/routes';
 
 const app = express();
+
+initEmailClient();
 
 await dbConnect();
 
