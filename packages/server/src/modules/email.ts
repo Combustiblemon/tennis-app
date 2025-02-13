@@ -53,6 +53,6 @@ export const sendLoginCodeEmail = async (email: string, code: string) => {
   sendEmail({
     emails: [email],
     subject: 'login code',
-    html: `<h1>the login code is ${code}</h1>`,
+    html: `<h1>Ο κωδικός σύνδεσης είναι <b>${code}</b></h1>`,
   });
 };

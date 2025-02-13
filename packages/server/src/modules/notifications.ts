@@ -42,7 +42,7 @@ export const initFirebaseApp = () => {
   }
 };
 
-export const sendMessageToTokens = (
+export const sendMessageToTokens = async (
   tokens: string[],
   data: Record<string, string>,
 ) => {
@@ -52,20 +52,19 @@ export const sendMessageToTokens = (
 
   initFirebaseApp();
 
-  // Send a message to the device corresponding to the provided
-  // registration token.
-  messaging()
-    .sendEachForMulticast({
+  try {
+    // Send a message to the device corresponding to the provided
+    // registration token.
+    const res = await messaging().sendEachForMulticast({
       data,
       tokens,
-    })
-    .then((response) => {
-      // Response is a message ID string.
-      signale.info('Successfully sent message to tokens:', response);
-    })
-    .catch((error) => {
-      signale.error('Error sending message to tokens:', error);
     });
+
+    // Response is a message ID string.
+    signale.info('Successfully sent message to tokens:', res);
+  } catch (error) {
+    signale.error('Error sending message to tokens:', error);
+  }
 };
 
 export const sendMessageToTopic = (

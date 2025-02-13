@@ -137,7 +137,7 @@ UserSchema.methods.addToken = function (token?: string) {
     return false;
   }
 
-  if ((this as User).FCMTokens) {
+  if ((this as User).FCMTokens && !(this as User).FCMTokens?.includes(token)) {
     (this as User).FCMTokens?.push(token);
   } else {
     (this as User).FCMTokens = [token];
