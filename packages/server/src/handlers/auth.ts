@@ -12,6 +12,7 @@ import {
   onSuccess,
   sessionCookie,
 } from '../modules/common';
+import { sendLoginCodeEmail } from '../modules/email';
 import { ServerError } from '../modules/error';
 import { subscribeUser } from '../modules/notifications';
 
@@ -72,6 +73,10 @@ export const login = async (req: Request, res: Response) => {
     code: loginCode,
     created: new Date(),
   };
+
+  if (isProduction) {
+    sendLoginCodeEmail(email, loginCode);
+  }
 
   try {
     await user.save();
@@ -173,11 +178,11 @@ export const verifyLogin = async (req: Request, res: Response) => {
   return res.status(200).json(
     onSuccess(
       {
-        name: user.name,
+        firstname: user.firstname,
+        lastname: user.lastname,
         email: user.email,
         role: user.role,
         _id: user._id.toString(),
-        session,
       },
       'verifyLogin',
     ),

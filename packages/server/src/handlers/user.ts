@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import signale from 'signale';
 import { z } from 'zod';
 
 import UserModel from '../models/User';
@@ -13,14 +12,18 @@ const updateOne = async (req: Request, res: Response) => {
     return;
   }
 
-  let name: string;
+  let data: {
+    firstname: string;
+    lastname: string;
+  };
 
   try {
-    name = z
+    data = z
       .object({
-        name: z.string().min(1).max(60),
+        firstname: z.string().min(1).max(60),
+        lastname: z.string().min(1).max(60),
       })
-      .parse(req.body).name;
+      .parse(req.body);
   } catch (error) {
     throw new ServerError({
       error: ERRORS.INVALID_DATA,
@@ -33,15 +36,16 @@ const updateOne = async (req: Request, res: Response) => {
     });
   }
 
-  await UserModel.findByIdAndUpdate(user._id, { name });
+  await UserModel.findByIdAndUpdate(user._id, {
+    firstname: data.firstname,
+    lastname: data.lastname,
+  });
 
-  res.status(200).json(onSuccess({ name }, 'user/id', 'PUT'));
+  res.status(200).json(onSuccess({ name: data }, 'user/id', 'PUT'));
 };
 
 export const getCurrent = async (req: Request, res: Response) => {
   const user = req.user;
-
-  signale.debug('user:getCurrent');
 
   if (!user) {
     throw new ServerError({
