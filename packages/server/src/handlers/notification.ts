@@ -4,6 +4,7 @@ import { z } from 'zod';
 import UserModel from '../models/User';
 import { authUserHelper, ERRORS, onSuccess } from '../modules/common';
 import { ServerError } from '../modules/error';
+import { subscribeUser } from '../modules/notifications';
 
 export const updateToken = async (
   req: Request,
@@ -42,7 +43,9 @@ export const updateToken = async (
     throw new Error('no user found');
   }
 
-  usr?.addToken(FCMToken);
+  if (usr?.addToken(FCMToken)) {
+    await subscribeUser(usr.role, [FCMToken]);
+  }
 
   await usr?.save();
 
