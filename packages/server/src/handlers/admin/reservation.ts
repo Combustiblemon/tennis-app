@@ -237,6 +237,9 @@ const createOne = async (req: Request, res: Response) => {
     sendMessageToTopic(Topics.ADMIN, {
       title: 'Νέα κράτηση',
       body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.firstname || ''} ${user.lastname || ''}`,
+      type: 'new',
+      reservationid: reservation._id.toString(),
+      datetime: reservation.datetime,
     });
   } catch (err: unknown) {
     signale.debug(
