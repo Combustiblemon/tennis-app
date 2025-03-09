@@ -192,6 +192,9 @@ const updateOne = async (req: Request, res: Response) => {
     sendMessageToTopic(Topics.ADMIN, {
       title: 'Αλλαγή κράτησης',
       body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.firstname || ''} ${user.lastname || ''}`,
+      type: 'update',
+      reservationid: reservation._id.toString(),
+      datetime: reservation.datetime,
     });
   } catch (err: unknown) {
     signale.debug(
@@ -286,6 +289,9 @@ const postOne = async (req: Request, res: Response) => {
     sendMessageToTopic(Topics.ADMIN, {
       title: 'Νέα κράτηση',
       body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.firstname || ''} ${user.lastname || ''}`,
+      type: 'new',
+      reservationid: reservation._id.toString(),
+      datetime: reservation.datetime,
     });
   } catch (err: unknown) {
     signale.debug(
@@ -471,6 +477,8 @@ const deleteMany = async (req: Request, res: Response) => {
         sendMessageToTopic(Topics.ADMIN, {
           title: 'Διαγραφή κράτησης',
           body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${(reservation.court as unknown as CourtType).name}\nΌνομα: ${user.firstname || ''} ${user.lastname || ''}`,
+          type: 'delete',
+          datetime: reservation.datetime,
         });
       });
     } catch (err: unknown) {
