@@ -6,6 +6,7 @@ import Court from '../../models/Court';
 import ReservationModel, {
   ReservationValidator,
 } from '../../models/Reservation';
+import UserModel from '../../models/User';
 import {
   authUserHelper,
   ERRORS,
@@ -14,7 +15,7 @@ import {
   onSuccess,
 } from '../../modules/common';
 import { ServerError } from '../../modules/error';
-import { sendMessageToTopic, Topics } from '../../modules/notifications';
+import { sendMessageToTokens } from '../../modules/notifications';
 
 const getMany = async (req: Request, res: Response) => {
   const date = z.string().safeParse(req.query.date).data;
@@ -234,7 +235,17 @@ const createOne = async (req: Request, res: Response) => {
   });
 
   try {
-    sendMessageToTopic(Topics.ADMIN, {
+    const adminTokens = (
+      await UserModel.find({
+        role: 'ADMIN',
+      })
+        .select('FCMTokens')
+        .lean()
+    ).reduce((acc, cur) => {
+      return cur.FCMTokens ? acc.concat(cur.FCMTokens) : acc;
+    }, [] as Array<string>);
+
+    sendMessageToTokens(adminTokens, {
       title: 'Νέα κράτηση',
       body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.firstname || ''} ${user.lastname || ''}`,
       type: 'new',

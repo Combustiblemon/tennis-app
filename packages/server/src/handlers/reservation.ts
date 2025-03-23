@@ -7,6 +7,7 @@ import ReservationModel, {
   ReservationValidator,
   ReservationValidatorPartial,
 } from '../models/Reservation';
+import UserModel from '../models/User';
 import {
   authUserHelper,
   ERRORS,
@@ -15,10 +16,10 @@ import {
   onSuccess,
 } from '../modules/common';
 import { ServerError } from '../modules/error';
-import { sendMessageToTopic, Topics } from '../modules/notifications';
+import { sendMessageToTokens } from '../modules/notifications';
 
 const getOne = async (req: Request, res: Response) => {
-  const { isAdmin, user } = authUserHelper(req);
+  const { user } = authUserHelper(req);
 
   if (!user) {
     return;
@@ -63,7 +64,6 @@ const getOne = async (req: Request, res: Response) => {
   }
 
   if (
-    !isAdmin &&
     reservations.some(
       (reservation) =>
         reservation.owner?.toString() !== user._id.toString() &&
@@ -82,7 +82,7 @@ const getOne = async (req: Request, res: Response) => {
 };
 
 const updateOne = async (req: Request, res: Response) => {
-  const { isAdmin, user } = authUserHelper(req);
+  const { user } = authUserHelper(req);
 
   if (!user) {
     return;
@@ -150,7 +150,7 @@ const updateOne = async (req: Request, res: Response) => {
     });
   }
 
-  if (reservation.owner !== user.id && !isAdmin) {
+  if (reservation.owner?.toString() !== user._id.toString()) {
     throw new ServerError({
       error: ERRORS.UNAUTHORIZED,
       operation: req.method as 'GET',
@@ -189,7 +189,17 @@ const updateOne = async (req: Request, res: Response) => {
   reservation.set(data);
 
   try {
-    sendMessageToTopic(Topics.ADMIN, {
+    const adminTokens = (
+      await UserModel.find({
+        role: 'ADMIN',
+      })
+        .select('FCMTokens')
+        .lean()
+    ).reduce((acc, cur) => {
+      return cur.FCMTokens ? acc.concat(cur.FCMTokens) : acc;
+    }, [] as Array<string>);
+
+    sendMessageToTokens(adminTokens, {
       title: 'Αλλαγή κράτησης',
       body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.firstname || ''} ${user.lastname || ''}`,
       type: 'update',
@@ -210,7 +220,7 @@ const updateOne = async (req: Request, res: Response) => {
 };
 
 const postOne = async (req: Request, res: Response) => {
-  const { isAdmin, user } = authUserHelper(req);
+  const { user } = authUserHelper(req);
 
   if (!user) {
     return;
@@ -223,7 +233,6 @@ const postOne = async (req: Request, res: Response) => {
     people: true,
     duration: true,
     notes: true,
-    ...(isAdmin ? { owner: true } : {}),
   });
 
   let data: z.infer<typeof validator>;
@@ -282,11 +291,21 @@ const postOne = async (req: Request, res: Response) => {
 
   const reservation = await ReservationModel.create({
     ...data,
-    owner: isAdmin ? data.owner || user._id : user._id,
+    owner: user._id,
   });
 
   try {
-    sendMessageToTopic(Topics.ADMIN, {
+    const adminTokens = (
+      await UserModel.find({
+        role: 'ADMIN',
+      })
+        .select('FCMTokens')
+        .lean()
+    ).reduce((acc, cur) => {
+      return cur.FCMTokens ? acc.concat(cur.FCMTokens) : acc;
+    }, [] as Array<string>);
+
+    sendMessageToTokens(adminTokens, {
       title: 'Νέα κράτηση',
       body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.firstname || ''} ${user.lastname || ''}`,
       type: 'new',
@@ -415,7 +434,7 @@ const getMany = async (req: Request, res: Response) => {
 };
 
 const deleteMany = async (req: Request, res: Response) => {
-  const { isAdmin, user } = authUserHelper(req);
+  const { user } = authUserHelper(req);
 
   if (!user) {
     return;
@@ -441,13 +460,12 @@ const deleteMany = async (req: Request, res: Response) => {
 
   const reservations = await ReservationModel.find({
     _id: { $in: ids },
-    ...(isAdmin ? {} : { owner: user.id }),
   }).populate('court');
 
   for (let i = 0; i < reservations.length; i += 1) {
     const reservation = reservations[i];
 
-    if (!isAdmin && reservation.owner !== user.id) {
+    if (reservation.owner?.toString() !== user._id.toString()) {
       throw new ServerError({
         error: ERRORS.UNAUTHORIZED,
         operation: req.method as 'GET',
@@ -473,8 +491,18 @@ const deleteMany = async (req: Request, res: Response) => {
     });
 
     try {
+      const adminTokens = (
+        await UserModel.find({
+          role: 'ADMIN',
+        })
+          .select('FCMTokens')
+          .lean()
+      ).reduce((acc, cur) => {
+        return cur.FCMTokens ? acc.concat(cur.FCMTokens) : acc;
+      }, [] as Array<string>);
+
       reservations.forEach((reservation) => {
-        sendMessageToTopic(Topics.ADMIN, {
+        sendMessageToTokens(adminTokens, {
           title: 'Διαγραφή κράτησης',
           body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${(reservation.court as unknown as CourtType).name}\nΌνομα: ${user.firstname || ''} ${user.lastname || ''}`,
           type: 'delete',
