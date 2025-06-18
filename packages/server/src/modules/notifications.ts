@@ -63,7 +63,10 @@ export const sendMessageToTokens = async (
     // Response is a message ID string.
     signale.info('Successfully sent message to tokens:', res);
   } catch (error) {
-    signale.error('Error sending message to tokens:', error);
+    signale.error(
+      'Error sending message to tokens:',
+      JSON.stringify(error, null, 2),
+    );
   }
 };
 
@@ -82,7 +85,10 @@ export const sendMessageToTopic = (
       signale.info(`Successfully sent message to topic ${topic}:`, response);
     })
     .catch((error) => {
-      signale.error(`Error sending message to topic ${topic}:`, error);
+      signale.error(
+        `Error sending message to topic ${topic}:`,
+        JSON.stringify(error, null, 2),
+      );
     });
 };
 
