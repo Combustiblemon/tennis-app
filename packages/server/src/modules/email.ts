@@ -35,18 +35,18 @@ export const sendEmail = async ({
     html: html,
   });
 
-  signale.debug(
-    `email sent to "${emails.join(',')}". data: \n`,
-    {
-      from: from || 'Keletron Support <support@mail.keletrontennisacademy.com>',
-      to: emails,
-      subject: subject,
-      text: text,
-      html: html,
-    },
-    '\nresponse:\n',
-    res,
-  );
+  // signale.debug(
+  //   `email sent to "${emails.join(',')}". data: \n`,
+  //   {
+  //     from: from || 'Keletron Support <support@mail.keletrontennisacademy.com>',
+  //     to: emails,
+  //     subject: subject,
+  //     text: text,
+  //     html: html,
+  //   },
+  //   '\nresponse:\n',
+  //   res,
+  // );
 };
 
 export const sendLoginCodeEmail = async (email: string, code: string) => {

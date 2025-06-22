@@ -352,7 +352,6 @@ const getMany = async (req: Request, res: Response) => {
   const offset = z.number().min(0).safeParse(Number(req.query.offset)).data;
 
   if (!!req.query.offset && offset !== 0 && !offset) {
-    signale.debug({ offset, off: req.query.offset });
     throw new ServerError({
       error: ERRORS.INVALID_QUERY,
       operation: req.method as 'GET',

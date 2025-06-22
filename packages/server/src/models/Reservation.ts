@@ -89,16 +89,13 @@ ReservationSchema.methods.sanitize = function (): ReservationSanitized {
 export function ReservationSanitized(
   reservation: ReservationType,
 ): ReservationSanitized {
-  return reservation.toObject({
-    transform: (doc, ret) =>
-      ({
-        court: ret.court,
-        datetime: ret.datetime,
-        duration: ret.duration,
-        type: ret.type,
-        notes: ret.notes,
-      }) satisfies ReservationSanitized,
-  });
+  return {
+    court: reservation.court,
+    datetime: reservation.datetime,
+    duration: reservation.duration,
+    type: reservation.type,
+    notes: reservation.notes,
+  } satisfies ReservationSanitized;
 }
 
 const ReservationModel =
