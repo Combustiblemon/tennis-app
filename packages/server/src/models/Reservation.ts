@@ -22,7 +22,7 @@ export const ReservationValidatorPartial = ReservationValidator.deepPartial();
 
 type ReservationSanitized = Pick<
   ReservationType,
-  'type' | 'court' | 'datetime' | 'duration' | 'notes'
+  'type' | 'court' | 'datetime' | 'duration' | 'notes' | '_id'
 >;
 
 export type ReservationDataType = Omit<
@@ -77,6 +77,7 @@ ReservationSchema.methods.sanitize = function (): ReservationSanitized {
   return (this as ReservationType).toObject({
     transform: (doc, ret) =>
       ({
+        _id: ret._id,
         court: ret.court,
         datetime: ret.datetime,
         duration: ret.duration,
@@ -90,6 +91,7 @@ export function ReservationSanitized(
   reservation: ReservationType,
 ): ReservationSanitized {
   return {
+    _id: reservation._id,
     court: reservation.court,
     datetime: reservation.datetime,
     duration: reservation.duration,
