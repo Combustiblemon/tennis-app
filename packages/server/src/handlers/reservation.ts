@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import Court, { CourtType } from '../models/Court';
 import ReservationModel, {
+  ReservationSanitized,
   ReservationValidator,
   ReservationValidatorPartial,
 } from '../models/Reservation';
@@ -424,7 +425,7 @@ const getMany = async (req: Request, res: Response) => {
       return r;
     }
 
-    return r.sanitize();
+    return ReservationSanitized(r);
   });
 
   return res

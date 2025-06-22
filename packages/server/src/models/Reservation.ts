@@ -86,6 +86,21 @@ ReservationSchema.methods.sanitize = function (): ReservationSanitized {
   });
 };
 
+export function ReservationSanitized(
+  reservation: ReservationType,
+): ReservationSanitized {
+  return reservation.toObject({
+    transform: (doc, ret) =>
+      ({
+        court: ret.court,
+        datetime: ret.datetime,
+        duration: ret.duration,
+        type: ret.type,
+        notes: ret.notes,
+      }) satisfies ReservationSanitized,
+  });
+}
+
 const ReservationModel =
   (mongoose.models.Reservation as Model<ReservationType>) ||
   mongoose.model<ReservationType>('Reservation', ReservationSchema);
