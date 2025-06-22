@@ -417,7 +417,6 @@ const getMany = async (req: Request, res: Response) => {
   /* find all the data in our database */
   const reservationsData = await ReservationModel.find({
     ...(date ? dateQuery : {}),
-    owner: user._id.toString(),
   }).lean();
 
   const reservationsSanitized = reservationsData.map((r) => {
