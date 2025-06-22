@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
+import signale from 'signale';
 import { ZodError, ZodIssue } from 'zod';
 
 import { CourtDataType } from '../models/Court';
@@ -38,6 +39,10 @@ export const onSuccess = <Data, Endpoint extends string>(
   endpoint: Endpoint,
   operation?: 'POST' | 'GET' | 'PUT' | 'DELETE',
 ): APIResponse<Data, Endpoint> => {
+  signale.success(
+    `${operation} | ${endpoint} : ${JSON.stringify(data, null, 2)}`,
+  );
+
   return {
     success: true as const,
     endpoint,

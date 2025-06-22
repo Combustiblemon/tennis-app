@@ -42,7 +42,9 @@ export const errorHandler: ErrorRequestHandler = (
   _next,
 ) => {
   if (err instanceof ServerError) {
-    signale.error(err);
+    if (err.status >= 500) {
+      signale.error(`${err.message} | ${JSON.stringify(err.data, null, 2)}`);
+    }
 
     res.status(err.status).json(onError(err));
     return;
