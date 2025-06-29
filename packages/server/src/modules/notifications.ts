@@ -2,17 +2,21 @@ import firebaseAdmin from 'firebase-admin';
 import { initializeApp } from 'firebase-admin/app';
 import signale from 'signale';
 
+import UserModel from '../models/User';
+
 const { credential, messaging } = firebaseAdmin;
 
 export enum Topics {
   ADMIN = 'admin',
   USER = 'user',
   TOURNAMENT = 'tournament',
+  DEVELOPER = 'developer',
 }
 
 const topicMap = {
   USER: [Topics.USER, Topics.TOURNAMENT],
   ADMIN: [Topics.ADMIN],
+  DEVELOPER: [Topics.DEVELOPER],
 } as const;
 
 let app = false;
@@ -45,12 +49,14 @@ export const initFirebaseApp = () => {
 export const sendMessageToTokens = async (
   tokens: string[],
   data: Record<string, string>,
-) => {
+): Promise<Array<string>> => {
   if (!tokens.length) {
-    return;
+    return [];
   }
 
   initFirebaseApp();
+
+  const failedTokens: Array<string> = [];
 
   try {
     // Send a message to the device corresponding to the provided
@@ -59,6 +65,42 @@ export const sendMessageToTokens = async (
       data,
       tokens,
     });
+
+    res.responses.forEach((r, i) => {
+      if (
+        r.error &&
+        r.error.code === 'messaging/registration-token-not-registered'
+      ) {
+        failedTokens.push(tokens[i]);
+      }
+    });
+
+    if (failedTokens.length) {
+      signale.error(
+        'Failed to send message to tokens:',
+        JSON.stringify(failedTokens, null, 2),
+      );
+
+      const users = await UserModel.find({
+        FCMTokens: { $in: failedTokens },
+      });
+
+      users.forEach((user) => {
+        failedTokens.forEach((token) => {
+          user.removeToken(token);
+        });
+        user.save();
+      });
+
+      signale.info(
+        'Removed failed tokens from users:',
+        JSON.stringify(
+          users.map((u) => u.email),
+          null,
+          2,
+        ),
+      );
+    }
 
     // Response is a message ID string.
     signale.info(
@@ -71,6 +113,8 @@ export const sendMessageToTokens = async (
       JSON.stringify(error, null, 2),
     );
   }
+
+  return failedTokens;
 };
 
 export const sendMessageToTopic = (
@@ -103,7 +147,7 @@ export const subscribeToTopic = async (
   topic: Topics | Array<Topics>,
 ) => {
   if (!tokens.length) {
-    return;
+    return true;
   }
 
   initFirebaseApp();
@@ -113,7 +157,10 @@ export const subscribeToTopic = async (
 
     if (res.errors.length > 0) {
       signale.error(res.errors);
+      return false;
     }
+
+    return true;
   } else {
     const res = await Promise.allSettled(
       topic.map(async (t) => {
@@ -145,8 +192,15 @@ export const subscribeToTopic = async (
       });
 
       signale.error('subscribeToTopic', JSON.stringify(errors, null, 2));
+
+      if (errors.length) {
+        return false;
+      }
+
+      return true;
     } else {
       signale.info(`subscribed tokens to topics`);
+      return true;
     }
   }
 };
@@ -205,16 +259,16 @@ export const subscribeUser = async (
   tokens: Array<string>,
 ) => {
   if (!tokens || !tokens.length) {
-    return;
+    return false;
   }
 
   const topics = topicMap.USER as unknown as Array<Topics>;
 
-  if (userType === 'ADMIN') {
+  if (userType === 'ADMIN' || userType === 'DEVELOPER') {
     topics.push(...topicMap.ADMIN);
   }
 
-  await subscribeToTopic(tokens, topics);
+  return subscribeToTopic(tokens, topics);
 };
 
 export const unsubscribeUser = async (
@@ -227,7 +281,7 @@ export const unsubscribeUser = async (
 
   const topics = topicMap.USER as unknown as Array<Topics>;
 
-  if (userType === 'ADMIN') {
+  if (userType === 'ADMIN' || userType === 'DEVELOPER') {
     topics.push(...topicMap.ADMIN);
   }
 

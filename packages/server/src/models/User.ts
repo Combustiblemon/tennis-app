@@ -6,7 +6,7 @@ import z from 'zod';
 const LOGIN_CODE_LIFETIME = 10 * 60 * 1000;
 
 export const UserValidator = z.object({
-  role: z.enum(['ADMIN', 'USER']).default('USER'),
+  role: z.enum(['ADMIN', 'USER', 'DEVELOPER']).default('USER'),
   email: z.string().email(),
   password: z.string().min(6).optional(),
   accountType: z.enum(['GOOGLE', 'PASSWORD']).optional(),
@@ -45,6 +45,7 @@ export type User = mongoose.Document &
     compareLoginCode: (code?: string) => boolean;
     sanitize: () => UserSanitized;
     addToken: (token: string) => boolean;
+    removeToken: (token: string) => boolean;
   };
 
 export const UserSchema = new mongoose.Schema<User>({
@@ -56,7 +57,7 @@ export const UserSchema = new mongoose.Schema<User>({
   },
   role: {
     type: String,
-    enum: ['ADMIN', 'USER'],
+    enum: ['ADMIN', 'USER', 'DEVELOPER'],
   },
   email: {
     type: String,
@@ -148,6 +149,16 @@ UserSchema.methods.addToken = function (token?: string) {
   }
 
   return true;
+};
+
+UserSchema.methods.removeToken = function (token?: string) {
+  if (!token) {
+    return false;
+  }
+
+  (this as User).FCMTokens = (this as User).FCMTokens?.filter(
+    (t) => t !== token,
+  );
 };
 
 UserSchema.methods.sanitize = function (): UserSanitized {

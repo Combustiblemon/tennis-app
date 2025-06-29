@@ -91,6 +91,7 @@ export enum ERRORS {
   RESOURCE_NOT_FOUND = 'resource_not_found',
   RESERVATION_TIME_CONFLICT = 'reservation_time_conflict',
   DATE_IN_THE_PAST = 'date_in_the_past',
+  FAILED_TO_SUBSCRIBE_TO_TOPIC = 'failed_to_subscribe_to_topic',
 }
 
 export const addMinutesToTime = (time: string, minutes: number) =>
@@ -237,7 +238,9 @@ export const authUserHelper = (req: Request) => {
   const isLoggedIn = !!user;
   return {
     isLoggedIn,
-    isAdmin: isLoggedIn && user?.role === 'ADMIN',
+    isAdmin:
+      isLoggedIn && (user?.role === 'ADMIN' || user?.role === 'DEVELOPER'),
+    isDeveloper: isLoggedIn && user?.role === 'DEVELOPER',
     isUser: isLoggedIn && user?.role === 'USER',
     user: isLoggedIn ? user : undefined,
   } as AuthUserHelpersReturnType;

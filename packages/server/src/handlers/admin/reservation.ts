@@ -235,23 +235,43 @@ const createOne = async (req: Request, res: Response) => {
   });
 
   try {
-    const adminTokens = (
-      await UserModel.find({
-        role: 'ADMIN',
-      })
-        .select('FCMTokens')
-        .lean()
-    ).reduce((acc, cur) => {
+    const admins = await UserModel.find({
+      role: { $in: ['ADMIN', 'DEVELOPER'] },
+    })
+      .select('FCMTokens email')
+      .lean();
+
+    const adminTokens = admins.reduce((acc, cur) => {
       return cur.FCMTokens ? acc.concat(cur.FCMTokens) : acc;
     }, [] as Array<string>);
 
-    sendMessageToTokens(adminTokens, {
+    const failedTokens = await sendMessageToTokens(adminTokens, {
       title: 'Νέα κράτηση',
       body: `${reservation.datetime.split('T')[0]} - ${reservation.datetime.split('T')[1]}\nΓήπεδο: ${court.name}\nΌνομα: ${user.firstname || ''} ${user.lastname || ''}`,
       type: 'new',
       reservationid: reservation._id.toString(),
       datetime: reservation.datetime,
     });
+
+    if (failedTokens.length) {
+      const developers = await UserModel.find({
+        role: 'DEVELOPER',
+      }).select('FCMTokens');
+
+      developers.forEach((developer) => {
+        if (developer?.FCMTokens) {
+          sendMessageToTokens(developer?.FCMTokens, {
+            title: 'Token error',
+            body: `${admins
+              .filter((a) => a.FCMTokens?.some((t) => failedTokens.includes(t)))
+              .map((a) => a.email)
+              .join(', ')}`,
+            type: 'error',
+            error: 'Failed to send notification to admins',
+          });
+        }
+      });
+    }
   } catch (err: unknown) {
     signale.debug(
       'error sending notification',

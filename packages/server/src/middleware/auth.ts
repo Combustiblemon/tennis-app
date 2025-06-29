@@ -42,7 +42,7 @@ export const adminAuth = async (
     session,
   });
 
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'DEVELOPER')) {
     next(
       new ServerError({
         error: ERRORS.UNAUTHORIZED,

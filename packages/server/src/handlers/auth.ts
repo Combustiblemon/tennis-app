@@ -165,8 +165,10 @@ export const verifyLogin = async (req: Request, res: Response) => {
     }
   }
 
+  let subscribed = false;
+
   if (FCMToken) {
-    subscribeUser(user.role, [FCMToken]);
+    subscribed = Boolean(await subscribeUser(user.role, [FCMToken]));
   }
 
   user.loginCode = undefined;
@@ -183,6 +185,7 @@ export const verifyLogin = async (req: Request, res: Response) => {
         email: user.email,
         role: user.role,
         _id: user._id.toString(),
+        subscribed,
       },
       'verifyLogin',
     ),
