@@ -173,6 +173,10 @@ export const verifyLogin = async (req: Request, res: Response) => {
 
   user.loginCode = undefined;
 
+  // Set iOS-compatible headers
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+
   sessionCookie.set(res, session);
 
   await user.save();
@@ -190,6 +194,82 @@ export const verifyLogin = async (req: Request, res: Response) => {
       'verifyLogin',
     ),
   );
+};
+
+export const refreshSession = async (req: Request, res: Response) => {
+  const currentSession = sessionCookie.get(req);
+
+  if (!currentSession) {
+    throw new ServerError({
+      error: ERRORS.UNAUTHORIZED,
+      operation: req.method as 'GET',
+      status: 401,
+      endpoint: 'refreshSession',
+    });
+  }
+
+  let user: User | null;
+
+  try {
+    user = await UserModel.findOne({
+      session: currentSession,
+    });
+  } catch (error) {
+    signale.error('Error finding user during session refresh', error);
+    throw new ServerError({
+      error: ERRORS.INTERNAL_SERVER_ERROR,
+      operation: req.method as 'GET',
+      status: 500,
+      endpoint: 'refreshSession',
+    });
+  }
+
+  if (!user) {
+    throw new ServerError({
+      error: ERRORS.UNAUTHORIZED,
+      operation: req.method as 'GET',
+      status: 401,
+      endpoint: 'refreshSession',
+    });
+  }
+
+  // Generate new session ID for security
+  const newSession = nanoid();
+  user.session = newSession;
+
+  // Set response headers for iOS compatibility
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+
+  sessionCookie.set(res, newSession);
+
+  try {
+    await user.save();
+
+    signale.info('Session refreshed for user:', user.email);
+
+    return res.status(200).json(
+      onSuccess(
+        {
+          firstname: user.firstname,
+          lastname: user.lastname,
+          email: user.email,
+          role: user.role,
+          _id: user._id.toString(),
+          sessionRefreshed: true,
+        },
+        'refreshSession',
+      ),
+    );
+  } catch (err) {
+    signale.error('Error saving user during session refresh', err);
+    throw new ServerError({
+      error: ERRORS.INTERNAL_SERVER_ERROR,
+      operation: req.method as 'GET',
+      status: 500,
+      endpoint: 'refreshSession',
+    });
+  }
 };
 
 export const logout = (req: Request, res: Response) => {

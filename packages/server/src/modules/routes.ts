@@ -2,7 +2,7 @@ import express, { Express, Router } from 'express';
 
 import adminCourt from '../handlers/admin/court';
 import adminReservation from '../handlers/admin/reservation';
-import { login, logout, verifyLogin } from '../handlers/auth';
+import { login, logout, refreshSession, verifyLogin } from '../handlers/auth';
 import court from '../handlers/court';
 import notification from '../handlers/notification';
 import reservation from '../handlers/reservation';
@@ -17,6 +17,7 @@ const setupAuthGroup = (app: Express) => {
     auth.get('/logout', asyncHandler(logout));
     auth.post('/verifyLogin', asyncHandler(verifyLogin));
     auth.post('/login', asyncHandler(login));
+    auth.post('/refresh', asyncHandler(refreshSession));
   }
 };
 

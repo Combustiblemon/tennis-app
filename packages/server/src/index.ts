@@ -38,6 +38,10 @@ app.use(
       }
     },
     credentials: true,
+    // iOS Safari compatibility
+    optionsSuccessStatus: 200,
+    preflightContinue: false,
+    exposedHeaders: ['set-cookie'],
   }),
 );
 

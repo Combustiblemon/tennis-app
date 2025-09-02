@@ -11,24 +11,51 @@ export const userAuth = async (
 ) => {
   const session = sessionCookie.get(req);
 
-  const user = await UserModel.findOne({
-    session,
-  });
+  // Add iOS-specific headers for better compatibility
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
 
-  if (!user) {
+  if (!session) {
     next(
       new ServerError({
         error: ERRORS.UNAUTHORIZED,
         status: 401,
         operation: req.method as 'GET',
+        data: { reason: 'missing_session' },
       }),
     );
-
     return;
   }
 
-  req.user = user;
-  next();
+  try {
+    const user = await UserModel.findOne({
+      session,
+    });
+
+    if (!user) {
+      next(
+        new ServerError({
+          error: ERRORS.UNAUTHORIZED,
+          status: 401,
+          operation: req.method as 'GET',
+          data: { reason: 'invalid_session' },
+        }),
+      );
+      return;
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    next(
+      new ServerError({
+        error: ERRORS.INTERNAL_SERVER_ERROR,
+        status: 500,
+        operation: req.method as 'GET',
+        data: { reason: 'session_validation_error' },
+      }),
+    );
+  }
 };
 
 export const adminAuth = async (
@@ -38,22 +65,61 @@ export const adminAuth = async (
 ) => {
   const session = sessionCookie.get(req);
 
-  const user = await UserModel.findOne({
-    session,
-  });
+  // Add iOS-specific headers for better compatibility
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
 
-  if (!user || (user.role !== 'ADMIN' && user.role !== 'DEVELOPER')) {
+  if (!session) {
     next(
       new ServerError({
         error: ERRORS.UNAUTHORIZED,
         status: 401,
         operation: req.method as 'GET',
+        data: { reason: 'missing_session' },
       }),
     );
-
     return;
   }
 
-  req.user = user;
-  next();
+  try {
+    const user = await UserModel.findOne({
+      session,
+    });
+
+    if (!user) {
+      next(
+        new ServerError({
+          error: ERRORS.UNAUTHORIZED,
+          status: 401,
+          operation: req.method as 'GET',
+          data: { reason: 'invalid_session' },
+        }),
+      );
+      return;
+    }
+
+    if (user.role !== 'ADMIN' && user.role !== 'DEVELOPER') {
+      next(
+        new ServerError({
+          error: ERRORS.UNAUTHORIZED,
+          status: 401,
+          operation: req.method as 'GET',
+          data: { reason: 'insufficient_privileges' },
+        }),
+      );
+      return;
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    next(
+      new ServerError({
+        error: ERRORS.INTERNAL_SERVER_ERROR,
+        status: 500,
+        operation: req.method as 'GET',
+        data: { reason: 'session_validation_error' },
+      }),
+    );
+  }
 };

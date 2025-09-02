@@ -9,7 +9,7 @@ import { User } from '../models/User';
 import { ServerError } from './error';
 import { APIResponse } from './responseTypes';
 
-export const isProduction = process.env.PRODUCTION?.toLowerCase() === 'true';
+export const isProduction = process.env.PRODUCTION?.toLowerCase() !== 'false';
 
 export const formatZodError = (
   error: ZodError<unknown>,
@@ -59,15 +59,24 @@ export const sessionCookie = {
 
     res.cookie('session', session, {
       httpOnly: true,
-      maxAge: 120 * 24 * 60 * 60 * 1000,
-      secure: process.env.IP === '0.0.0.0',
+      maxAge: 120 * 24 * 60 * 60 * 1000, // 120 days
+      secure: isProduction, // Use production flag for HTTPS
+      sameSite: 'lax', // Critical for iOS Safari compatibility
+      path: '/',
+      ...(process.env.COOKIE_DOMAIN && { domain: process.env.COOKIE_DOMAIN }),
     });
   },
   get: (req: Request): string | undefined => {
     return req.cookies.session || undefined;
   },
   clear: (res: Response) => {
-    res.clearCookie('session');
+    res.clearCookie('session', {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      path: '/',
+      ...(process.env.COOKIE_DOMAIN && { domain: process.env.COOKIE_DOMAIN }),
+    });
   },
 };
 
@@ -88,6 +97,7 @@ export enum ERRORS {
   INVALID_RESET_REQUEST = 'invalid_reset_request',
   INVALID_PASSWORD = 'invalid_password',
   UNAUTHORIZED = 'unauthorized',
+  SESSION_EXPIRED = 'session_expired',
   RESOURCE_NOT_FOUND = 'resource_not_found',
   RESERVATION_TIME_CONFLICT = 'reservation_time_conflict',
   DATE_IN_THE_PAST = 'date_in_the_past',
