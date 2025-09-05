@@ -61,7 +61,7 @@ export const sessionCookie = {
       httpOnly: true,
       maxAge: 120 * 24 * 60 * 60 * 1000, // 120 days
       secure: isProduction, // Use production flag for HTTPS
-      sameSite: 'lax', // Critical for iOS Safari compatibility
+      sameSite: 'none', // Critical for iOS Safari compatibility
       path: '/',
       ...(process.env.COOKIE_DOMAIN && { domain: process.env.COOKIE_DOMAIN }),
     });
@@ -73,7 +73,7 @@ export const sessionCookie = {
     res.clearCookie('session', {
       httpOnly: true,
       secure: isProduction,
-      sameSite: 'lax',
+      sameSite: 'none',
       path: '/',
       ...(process.env.COOKIE_DOMAIN && { domain: process.env.COOKIE_DOMAIN }),
     });

@@ -1,11 +1,13 @@
 # iOS Authentication Fixes
 
 ## Overview
+
 This document outlines the fixes implemented to resolve iOS-specific authentication disconnection issues.
 
 ## Changes Made
 
 ### 1. Updated Cookie Configuration
+
 - **File**: `src/modules/common.ts`
 - **Changes**:
   - Added `sameSite: 'lax'` - Critical for iOS Safari compatibility
@@ -14,6 +16,7 @@ This document outlines the fixes implemented to resolve iOS-specific authenticat
   - Updated `clearCookie` to match cookie settings
 
 ### 2. Added Session Refresh Endpoint
+
 - **File**: `src/handlers/auth.ts`
 - **New Endpoint**: `POST /auth/refresh`
 - **Purpose**: Allows graceful session renewal without full re-login
@@ -24,6 +27,7 @@ This document outlines the fixes implemented to resolve iOS-specific authenticat
   - Includes iOS-compatible headers
 
 ### 3. Enhanced Session Validation
+
 - **File**: `src/middleware/auth.ts`
 - **Improvements**:
   - Better error handling with specific error reasons
@@ -32,6 +36,7 @@ This document outlines the fixes implemented to resolve iOS-specific authenticat
   - Detailed error responses for debugging
 
 ### 4. Updated CORS Configuration
+
 - **File**: `src/index.ts`
 - **Changes**:
   - Added `optionsSuccessStatus: 200` for iOS Safari
@@ -39,6 +44,7 @@ This document outlines the fixes implemented to resolve iOS-specific authenticat
   - Added `preflightContinue: false` for better preflight handling
 
 ### 5. Added iOS-Specific Headers
+
 - **Applied to**: Authentication endpoints and middleware
 - **Headers**:
   - `Cache-Control: no-cache, no-store, must-revalidate`
@@ -63,6 +69,7 @@ SECRET=your-cookie-secret
 ## Client-Side Recommendations
 
 ### 1. Implement Session Refresh
+
 ```javascript
 // Call this periodically or when receiving 401 errors
 const refreshSession = async () => {
@@ -85,6 +92,7 @@ const refreshSession = async () => {
 ```
 
 ### 2. Handle 401 Errors Gracefully
+
 ```javascript
 // Intercept API responses
 fetch('/api/endpoint', { credentials: 'include' })
@@ -101,6 +109,7 @@ fetch('/api/endpoint', { credentials: 'include' })
 ```
 
 ### 3. Session Heartbeat (Optional)
+
 ```javascript
 // Keep session alive during active usage
 setInterval(() => {
@@ -113,11 +122,13 @@ setInterval(() => {
 ## Testing
 
 ### 1. Test on iOS Safari
+
 - Verify cookies persist across app backgrounding
 - Test session refresh functionality
 - Confirm no unexpected logouts during normal usage
 
 ### 2. Test Cookie Behavior
+
 ```bash
 # Check cookie headers in production
 curl -i -X POST https://your-domain.com/auth/verifyLogin \
@@ -126,6 +137,7 @@ curl -i -X POST https://your-domain.com/auth/verifyLogin \
 ```
 
 Look for:
+
 - `Set-Cookie` header with `SameSite=lax`
 - `Secure` flag in production
 - Proper `Path` and `Domain` settings
@@ -133,15 +145,19 @@ Look for:
 ## Common Issues & Solutions
 
 ### Issue: Cookies not persisting on iOS
+
 **Solution**: Ensure `sameSite: 'lax'` and `secure: true` in production
 
 ### Issue: Session lost during app backgrounding
+
 **Solution**: Implement session refresh and proper error handling
 
 ### Issue: CORS errors on iOS WebView
+
 **Solution**: Verify CORS configuration includes iOS-specific settings
 
 ### Issue: Session expires too quickly
+
 **Solution**: Use session refresh endpoint instead of extending session duration
 
 ## Monitoring
