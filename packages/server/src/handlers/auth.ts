@@ -178,6 +178,7 @@ export const verifyLogin = async (req: Request, res: Response) => {
   res.setHeader('Pragma', 'no-cache');
 
   sessionCookie.set(res, session);
+  signale.info(`Setting session cookie for user: ${user.email}`);
 
   await user.save();
 
@@ -242,6 +243,7 @@ export const refreshSession = async (req: Request, res: Response) => {
   res.setHeader('Pragma', 'no-cache');
 
   sessionCookie.set(res, newSession);
+  signale.info(`Setting refresh session cookie for user: ${user.email}`);
 
   try {
     await user.save();
@@ -274,6 +276,8 @@ export const refreshSession = async (req: Request, res: Response) => {
 
 export const logout = (req: Request, res: Response) => {
   sessionCookie.clear(res);
+
+  signale.info(`Clearing cookie for user: ${req.user?.email}`);
 
   res.status(200).json(onSuccess({}, 'logout'));
 };

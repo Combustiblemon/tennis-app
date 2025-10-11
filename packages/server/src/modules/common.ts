@@ -39,9 +39,7 @@ export const onSuccess = <Data, Endpoint extends string>(
   endpoint: Endpoint,
   operation?: 'POST' | 'GET' | 'PUT' | 'DELETE',
 ): APIResponse<Data, Endpoint> => {
-  signale.success(
-    `${operation} | ${endpoint} : ${JSON.stringify(data, null, 2)}`,
-  );
+  signale.success(`${operation} | ${endpoint}`);
 
   return {
     success: true as const,
@@ -59,11 +57,11 @@ export const sessionCookie = {
 
     res.cookie('session', session, {
       httpOnly: true,
-      maxAge: 120 * 24 * 60 * 60 * 1000, // 120 days
-      secure: isProduction, // Use production flag for HTTPS
+      maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
+      secure: false,
       sameSite: 'none', // Critical for iOS Safari compatibility
       path: '/',
-      ...(process.env.COOKIE_DOMAIN && { domain: process.env.COOKIE_DOMAIN }),
+      ...(process.env.COOKIE_DOMAIN && { domain: process.env.COOKIE_DOMAIN }), // Optional domain configuration
     });
   },
   get: (req: Request): string | undefined => {
@@ -72,10 +70,10 @@ export const sessionCookie = {
   clear: (res: Response) => {
     res.clearCookie('session', {
       httpOnly: true,
-      secure: isProduction,
+      secure: false,
       sameSite: 'none',
       path: '/',
-      ...(process.env.COOKIE_DOMAIN && { domain: process.env.COOKIE_DOMAIN }),
+      ...(process.env.COOKIE_DOMAIN && { domain: process.env.COOKIE_DOMAIN }), // Optional domain configuration
     });
   },
 };
