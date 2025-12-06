@@ -2,6 +2,7 @@ import { User as ClerkUser } from '@clerk/express';
 import signale from 'signale';
 
 import UserModel, { User } from '../models/User';
+import { clerkClient } from '../modules/clerk';
 
 /**
  * Service for managing user synchronization between Clerk and our database
@@ -53,6 +54,8 @@ export class UserService {
     const user = await UserModel.create(userData);
     signale.info(`Created new user from Clerk: ${user.email} (${user.clerkId}) with role USER`);
 
+    // Note: Sync to Clerk happens automatically via post-save hook
+
     return user;
   }
 
@@ -84,6 +87,34 @@ export class UserService {
    */
   static async getByClerkId(clerkId: string): Promise<User | null> {
     return await UserModel.findOne({ clerkId });
+  }
+
+  /**
+   * Sync user role and FCMTokens to Clerk publicMetadata
+   */
+  static async syncToClerk(user: User): Promise<void> {
+    if (!user.clerkId) {
+      // User doesn't have a Clerk ID yet, skip sync
+      return;
+    }
+
+    try {
+      await clerkClient.users.updateUserMetadata(user.clerkId, {
+        publicMetadata: {
+          role: user.role,
+          FCMTokens: user.FCMTokens || [],
+        },
+      });
+      signale.debug(
+        `Synced role and FCMTokens to Clerk for user ${user.email} (${user.clerkId})`,
+      );
+    } catch (error) {
+      signale.error(
+        `Failed to sync to Clerk for user ${user.email} (${user.clerkId}):`,
+        error,
+      );
+      // Don't throw - sync failure shouldn't break user operations
+    }
   }
 }
 

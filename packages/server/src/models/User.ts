@@ -1,6 +1,8 @@
 import mongoose, { Model, Types } from 'mongoose';
 import z from 'zod';
 
+import UserService from '../services/userService';
+
 export const UserValidator = z.object({
   clerkId: z.string().optional(),
   role: z.enum(['ADMIN', 'USER', 'DEVELOPER']).default('USER'),
@@ -118,6 +120,21 @@ UserSchema.methods.sanitize = function (): UserSanitized {
       }) satisfies UserSanitized,
   });
 };
+
+// Post-save hook to sync role and FCMTokens to Clerk metadata
+UserSchema.post<User>('save', async function (doc) {
+  // Only sync if role or FCMTokens were modified
+  if (this.isModified('role') || this.isModified('FCMTokens') || this.isNew) {
+    // Use setImmediate to avoid blocking the save operation
+    setImmediate(async () => {
+      try {
+        await UserService.syncToClerk(doc);
+      } catch {
+        // Error is already logged in syncToClerk, just prevent unhandled rejection
+      }
+    });
+  }
+});
 
 const UserModel =
   (mongoose.models.User as Model<User>) ||
