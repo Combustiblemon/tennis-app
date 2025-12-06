@@ -2,31 +2,17 @@ import express, { Express, Router } from 'express';
 
 import adminCourt from '../handlers/admin/court';
 import adminReservation from '../handlers/admin/reservation';
-import { login, logout, refreshSession, verifyLogin } from '../handlers/auth';
 import court from '../handlers/court';
 import notification from '../handlers/notification';
 import reservation from '../handlers/reservation';
 import user from '../handlers/user';
 // Auth configuration
-import { authConfig, isClerkOnlyMode, isHybridMode } from '../config/authConfig';
-// Legacy auth middleware - will be removed in next phase
-import { adminAuth, userAuth } from '../middleware/auth';
-// New Clerk-based auth middleware
+import { authConfig } from '../config/authConfig';
+// Clerk-based auth middleware
 import { clerkAdminAuth, clerkUserAuth } from '../middleware/clerkAuth';
-// Hybrid auth middleware for gradual migration
-import { hybridAdminAuth, hybridUserAuth, migrationStatus } from '../middleware/hybridAuth';
+// Migration status tracking
+import { migrationStatus } from '../middleware/hybridAuth';
 import { asyncHandler } from './error';
-
-const setupAuthGroup = (app: Express) => {
-  const auth = express.Router({ mergeParams: true });
-  app.use('/auth', auth);
-  {
-    auth.get('/logout', asyncHandler(logout));
-    auth.post('/verifyLogin', asyncHandler(verifyLogin));
-    auth.post('/login', asyncHandler(login));
-    auth.post('/refresh', asyncHandler(refreshSession));
-  }
-};
 
 const setupAdminGroup = (app: Router) => {
   const admin = express.Router({ mergeParams: true });
@@ -37,15 +23,8 @@ const setupAdminGroup = (app: Router) => {
     admin.use(migrationStatus);
   }
 
-  // Choose authentication strategy based on configuration
-  if (isClerkOnlyMode()) {
-    admin.use(clerkAdminAuth);
-  } else if (isHybridMode()) {
-    admin.use(hybridAdminAuth);
-  } else {
-    // Legacy mode
-    admin.use(adminAuth);
-  }
+  // Use Clerk-based admin authentication
+  admin.use(clerkAdminAuth);
   {
     const reservations = express.Router({ mergeParams: true });
     admin.use('/reservations', reservations);
@@ -88,15 +67,8 @@ const setupAuthorizedGroup = (app: Express) => {
     authorized.use(migrationStatus);
   }
 
-  // Choose authentication strategy based on configuration
-  if (isClerkOnlyMode()) {
-    authorized.use(clerkUserAuth);
-  } else if (isHybridMode()) {
-    authorized.use(hybridUserAuth);
-  } else {
-    // Legacy mode
-    authorized.use(userAuth);
-  }
+  // Use Clerk-based user authentication
+  authorized.use(clerkUserAuth);
   {
     const reservations = express.Router({ mergeParams: true });
     authorized.use('/reservations', reservations);
@@ -133,6 +105,6 @@ const setupAuthorizedGroup = (app: Express) => {
 };
 
 export const setupRoutes = (app: Express) => {
-  setupAuthGroup(app);
+  // Legacy auth endpoints removed - authentication is now handled by Clerk
   setupAuthorizedGroup(app);
 };

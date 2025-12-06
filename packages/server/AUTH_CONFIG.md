@@ -29,36 +29,23 @@ LOG_AUTH_ATTEMPTS=true            # Log auth attempts (default in dev)
 LOG_MIGRATION_STATUS=true         # Log migration status (default in dev)
 ```
 
-## Migration Phases
+## Authentication Mode
 
-### Phase 1: Hybrid Mode (Default)
-```env
-USE_HYBRID_AUTH=true
-ALLOW_LEGACY_AUTH=true
-```
-- Supports both Clerk and legacy authentication
-- Automatically creates/links users from Clerk
-- Existing users continue to work with legacy auth
-- New users can use Clerk authentication
-
-### Phase 2: Clerk Only Mode
-```env
-USE_CLERK_AUTH=true
-USE_HYBRID_AUTH=false
-ALLOW_LEGACY_AUTH=false
-```
+### Clerk Only Mode (Current)
 - Only Clerk authentication is accepted
-- All users must be migrated to Clerk
-- Legacy auth endpoints can be removed
+- All users authenticate through Clerk
+- Legacy auth endpoints have been removed
+- Automatic user creation/linking on first Clerk login
 
 ## Authentication Flow
 
-### Hybrid Mode Flow
-1. Check for Clerk authentication (`req.auth.userId`)
-2. If found, use Clerk auth middleware
-3. If not found, check for legacy session cookie
-4. If found, use legacy auth middleware
-5. If neither found, return 401 Unauthorized
+### Clerk Authentication Flow
+1. User authenticates via Clerk (handled by Clerk SDK on frontend)
+2. Clerk middleware validates JWT token
+3. System checks for user in database by Clerk ID
+4. If user not found, automatically creates/links user
+5. User data is attached to request (`req.user`)
+6. Protected routes can access authenticated user
 
 ### User Creation/Linking
 - When a Clerk user logs in for the first time:
@@ -70,32 +57,21 @@ ALLOW_LEGACY_AUTH=false
 
 ## Configuration Examples
 
-### Development Setup (Gradual Migration)
+### Development Setup
 ```env
-USE_HYBRID_AUTH=true
-ALLOW_LEGACY_AUTH=true
 ENABLE_AUTO_USER_CREATION=true
 ENABLE_USER_MIGRATION=true
+ENABLE_ROLE_SYNC=true
 LOG_AUTH_ATTEMPTS=true
 LOG_MIGRATION_STATUS=true
 ```
 
-### Production Setup (Full Migration)
+### Production Setup
 ```env
-USE_CLERK_AUTH=true
-USE_HYBRID_AUTH=false
-ALLOW_LEGACY_AUTH=false
 ENABLE_AUTO_USER_CREATION=true
 ENABLE_ROLE_SYNC=true
 LOG_AUTH_ATTEMPTS=false
 LOG_MIGRATION_STATUS=false
-```
-
-### Testing Setup (Legacy Only)
-```env
-USE_CLERK_AUTH=false
-USE_HYBRID_AUTH=false
-ALLOW_LEGACY_AUTH=true
 ```
 
 ## Monitoring Migration
