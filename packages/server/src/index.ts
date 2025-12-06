@@ -4,6 +4,7 @@ import cors from 'cors';
 import express from 'express';
 import signale from 'signale';
 
+import { authConfig, isClerkOnlyMode, isHybridMode, isLegacyOnlyMode } from './config/authConfig';
 import { isProduction } from './modules/common';
 import { clerkAuth, initClerk } from './modules/clerk';
 import dbConnect from './modules/dbConnect';
@@ -19,10 +20,44 @@ initEmailClient();
 await dbConnect();
 initFirebaseApp();
 
-// Initialize Clerk authentication
-if (!initClerk()) {
-  signale.warn('Clerk initialization failed - authentication may not work properly');
+// Initialize and configure authentication
+const logAuthConfig = () => {
+  signale.info('🔐 Authentication Configuration:');
+
+  if (isClerkOnlyMode()) {
+    signale.success('  Mode: Clerk Only (Full Migration)');
+  } else if (isHybridMode()) {
+    signale.info('  Mode: Hybrid (Gradual Migration)');
+    signale.info('  - Clerk authentication: ✅ Enabled');
+    signale.info('  - Legacy authentication: ✅ Enabled');
+  } else if (isLegacyOnlyMode()) {
+    signale.warn('  Mode: Legacy Only (No Clerk)');
+  }
+
+  signale.info(`  Auto user creation: ${authConfig.enableAutoUserCreation ? '✅' : '❌'}`);
+  signale.info(`  User migration: ${authConfig.enableUserMigration ? '✅' : '❌'}`);
+  signale.info(`  Role sync: ${authConfig.enableRoleSync ? '✅' : '❌'}`);
+
+  if (authConfig.logAuthAttempts || authConfig.logMigrationStatus) {
+    signale.info(`  Debug logging: ✅ Enabled`);
+  }
+};
+
+// Initialize Clerk if needed
+if (authConfig.useClerkAuth || authConfig.useHybridAuth) {
+  if (!initClerk()) {
+    if (isClerkOnlyMode()) {
+      signale.error('Clerk initialization failed in Clerk-only mode - server cannot start');
+      process.exit(1);
+    } else {
+      signale.warn('Clerk initialization failed - falling back to legacy auth only');
+      authConfig.useHybridAuth = false;
+      authConfig.useClerkAuth = false;
+    }
+  }
 }
+
+logAuthConfig();
 
 const findOrigin = (origin: string) =>
   new RegExp(/(?<=https:\/\/).*?(?=\/)/, '').exec(origin)?.[0] || '';

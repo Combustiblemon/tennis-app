@@ -7,7 +7,14 @@ import court from '../handlers/court';
 import notification from '../handlers/notification';
 import reservation from '../handlers/reservation';
 import user from '../handlers/user';
+// Auth configuration
+import { authConfig, isClerkOnlyMode, isHybridMode } from '../config/authConfig';
+// Legacy auth middleware - will be removed in next phase
 import { adminAuth, userAuth } from '../middleware/auth';
+// New Clerk-based auth middleware
+import { clerkAdminAuth, clerkUserAuth } from '../middleware/clerkAuth';
+// Hybrid auth middleware for gradual migration
+import { hybridAdminAuth, hybridUserAuth, migrationStatus } from '../middleware/hybridAuth';
 import { asyncHandler } from './error';
 
 const setupAuthGroup = (app: Express) => {
@@ -25,7 +32,20 @@ const setupAdminGroup = (app: Router) => {
   const admin = express.Router({ mergeParams: true });
   app.use('/admin', admin);
 
-  admin.use(adminAuth);
+  // Add migration status tracking if enabled
+  if (authConfig.logMigrationStatus) {
+    admin.use(migrationStatus);
+  }
+
+  // Choose authentication strategy based on configuration
+  if (isClerkOnlyMode()) {
+    admin.use(clerkAdminAuth);
+  } else if (isHybridMode()) {
+    admin.use(hybridAdminAuth);
+  } else {
+    // Legacy mode
+    admin.use(adminAuth);
+  }
   {
     const reservations = express.Router({ mergeParams: true });
     admin.use('/reservations', reservations);
@@ -63,7 +83,20 @@ const setupAuthorizedGroup = (app: Express) => {
   const authorized = express.Router({ mergeParams: true });
   app.use('/', authorized);
 
-  authorized.use(userAuth);
+  // Add migration status tracking if enabled
+  if (authConfig.logMigrationStatus) {
+    authorized.use(migrationStatus);
+  }
+
+  // Choose authentication strategy based on configuration
+  if (isClerkOnlyMode()) {
+    authorized.use(clerkUserAuth);
+  } else if (isHybridMode()) {
+    authorized.use(hybridUserAuth);
+  } else {
+    // Legacy mode
+    authorized.use(userAuth);
+  }
   {
     const reservations = express.Router({ mergeParams: true });
     authorized.use('/reservations', reservations);
