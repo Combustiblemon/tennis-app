@@ -11,13 +11,17 @@ This document outlines the setup and configuration for Clerk authentication in t
 - Created new Clerk-based authentication middleware
 
 ### Files Modified:
-- `package.json` - Added @clerk/express dependency
+- `package.json` - Added @clerk/express dependency and migration scripts
 - `src/index.ts` - Integrated Clerk middleware
 - `global.d.ts` - Added Clerk types to Express Request interface
+- `src/models/User.ts` - Added clerkId field and updated schema
+- `src/modules/common.ts` - Enhanced auth helper functions
 
 ### Files Created:
 - `src/modules/clerk.ts` - Clerk configuration and client setup
 - `src/middleware/clerkAuth.ts` - New Clerk-based auth middleware
+- `src/services/userService.ts` - User synchronization service
+- `src/scripts/migrateToClerk.ts` - Database migration utilities
 - `.env.example` - Environment variables template
 - `CLERK_SETUP.md` - This documentation file
 
@@ -48,15 +52,21 @@ CLERK_SECRET_KEY=sk_test_your_secret_key_here
 
 ## Current Status
 
-✅ **Completed:**
+✅ **Phase 1 Completed:**
 - Clerk SDK installation and basic configuration
 - Clerk middleware integration
 - New authentication middleware created
 - Environment configuration template
 
+✅ **Phase 2 Completed:**
+- Updated User model with Clerk ID field
+- Created UserService for Clerk user synchronization
+- Enhanced authentication middleware with auto user creation
+- Added database migration scripts
+- Updated helper functions for Clerk compatibility
+
 ⏳ **Next Steps (Remaining Phases):**
-- Update User model to include Clerk ID
-- Replace existing auth middleware usage
+- Replace existing auth middleware usage in routes
 - Remove custom auth endpoints
 - Set up user synchronization webhooks
 - Test and validate the integration
@@ -78,7 +88,32 @@ CLERK_SECRET_KEY=sk_test_your_secret_key_here
 ## Migration Strategy
 
 The current setup allows for a gradual migration:
-1. New Clerk middleware is available but not yet used
-2. Existing custom auth system remains functional
-3. Routes can be migrated one by one to use Clerk authentication
-4. Old auth system can be removed once migration is complete
+1. ✅ New Clerk middleware is available but not yet used
+2. ✅ User model supports both legacy and Clerk authentication
+3. ✅ Database migration scripts are available
+4. ⏳ Routes can be migrated one by one to use Clerk authentication
+5. ⏳ Old auth system can be removed once migration is complete
+
+## Database Migration Commands
+
+```bash
+# Prepare database for Clerk migration
+npm run migrate:clerk-prep
+
+# Check migration status
+npm run migrate:clerk-status
+
+# Link existing user with Clerk ID (manual)
+npm run migrate:clerk-link user@example.com clerk_user_id
+
+# Clean up legacy auth data for migrated users
+npm run migrate:clerk-cleanup
+```
+
+## User Synchronization
+
+The system now automatically:
+- Creates new users from Clerk authentication
+- Links existing users by email during first Clerk login
+- Syncs user roles between Clerk metadata and database
+- Maintains FCM tokens and other app-specific data

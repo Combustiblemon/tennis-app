@@ -2,14 +2,16 @@ import bcrypt from 'bcryptjs';
 import mongoose, { Model, Types } from 'mongoose';
 import z from 'zod';
 
-// 10 minutes
+// 10 minutes - keeping for backward compatibility during migration
 const LOGIN_CODE_LIFETIME = 10 * 60 * 1000;
 
 export const UserValidator = z.object({
+  clerkId: z.string().optional(), // Clerk user ID for new auth system
   role: z.enum(['ADMIN', 'USER', 'DEVELOPER']).default('USER'),
   email: z.string().email(),
+  // Legacy fields - will be removed after migration
   password: z.string().min(6).optional(),
-  accountType: z.enum(['GOOGLE', 'PASSWORD']).optional(),
+  accountType: z.enum(['GOOGLE', 'PASSWORD', 'EMAIL', 'CLERK']).optional(),
   firstname: z.string().max(60).optional(),
   lastname: z.string().max(60).optional(),
 });
@@ -20,6 +22,7 @@ type SanitizedUserFields =
   | 'email'
   | 'role'
   | '_id'
+  | 'clerkId'
   | 'FCMTokens';
 
 export type UserDataType = z.infer<typeof UserValidator>;
@@ -29,6 +32,8 @@ export type UserSanitized = Pick<User, SanitizedUserFields>;
 export type User = mongoose.Document &
   z.infer<typeof UserValidator> & {
     _id: Types.ObjectId;
+    clerkId?: string; // Clerk user ID for linking accounts
+    // Legacy fields - will be removed after migration
     resetKey?: {
       value: string;
       expiresAt: Date;
@@ -39,16 +44,26 @@ export type User = mongoose.Document &
       code: string;
       created: Date;
     };
+    // Legacy methods - will be removed after migration
     comparePasswords: (candidatePassword?: string) => boolean;
     compareResetKey: (resetKey?: string) => boolean;
     compareSessions: (session?: string) => boolean;
     compareLoginCode: (code?: string) => boolean;
+    // Current methods
     sanitize: () => UserSanitized;
     addToken: (token: string) => boolean;
     removeToken: (token: string) => boolean;
   };
 
 export const UserSchema = new mongoose.Schema<User>({
+  // Clerk integration
+  clerkId: {
+    type: String,
+    unique: true,
+    sparse: true, // Allows null values while maintaining uniqueness
+    index: true, // Index for fast lookups
+  },
+  // Core user fields
   firstname: {
     type: String,
   },
@@ -58,6 +73,7 @@ export const UserSchema = new mongoose.Schema<User>({
   role: {
     type: String,
     enum: ['ADMIN', 'USER', 'DEVELOPER'],
+    default: 'USER',
   },
   email: {
     type: String,
@@ -72,6 +88,11 @@ export const UserSchema = new mongoose.Schema<User>({
       message: (props) => `${props.value} is not a valid email!`,
     },
   },
+  FCMTokens: {
+    type: [String],
+    default: [],
+  },
+  // Legacy fields - will be removed after migration
   password: {
     type: String,
   },
@@ -84,15 +105,13 @@ export const UserSchema = new mongoose.Schema<User>({
       type: Date,
     },
   },
-  FCMTokens: {
-    type: [String],
-  },
   session: {
     type: String,
   },
   accountType: {
     type: String,
-    enum: ['GOOGLE', 'PASSWORD', 'EMAIL'],
+    enum: ['GOOGLE', 'PASSWORD', 'EMAIL', 'CLERK'],
+    default: 'CLERK',
   },
   loginCode: {
     code: {
@@ -102,6 +121,8 @@ export const UserSchema = new mongoose.Schema<User>({
       type: Date,
     },
   },
+}, {
+  timestamps: true, // Adds createdAt and updatedAt fields
 });
 
 UserSchema.methods.comparePasswords = function (candidatePassword?: string) {
@@ -170,7 +191,8 @@ UserSchema.methods.sanitize = function (): UserSanitized {
         email: ret.email,
         role: ret.role,
         _id: ret._id,
-        FCMTokens: ret.FCMToken,
+        clerkId: ret.clerkId,
+        FCMTokens: ret.FCMTokens, // Fixed typo: was ret.FCMToken
       }) satisfies UserSanitized,
   });
 };

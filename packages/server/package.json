@@ -25,7 +25,11 @@
   "scripts": {
     "debug": "tsx --inspect ./src/index.ts",
     "dev": "tsx ./src/index.ts",
-    "tsc-alias": "tsc-alias -p tsconfig.app.json"
+    "tsc-alias": "tsc-alias -p tsconfig.app.json",
+    "migrate:clerk-prep": "tsx ./src/scripts/migrateToClerk.ts prep",
+    "migrate:clerk-link": "tsx ./src/scripts/migrateToClerk.ts link",
+    "migrate:clerk-status": "tsx ./src/scripts/migrateToClerk.ts status",
+    "migrate:clerk-cleanup": "tsx ./src/scripts/migrateToClerk.ts cleanup"
   },
   "type": "module",
   "version": "0.1.0"

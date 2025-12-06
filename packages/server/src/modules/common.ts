@@ -238,18 +238,24 @@ type AuthUserHelpersReturnType = (
 ) & {
   isAdmin: boolean;
   isUser: boolean;
+  isDeveloper: boolean;
+  hasClerkAuth: boolean;
 };
 
 export const authUserHelper = (req: Request) => {
   const user = req.user;
+  const clerkAuth = req.auth;
 
   const isLoggedIn = !!user;
+  const hasClerkAuth = !!clerkAuth?.userId;
+
   return {
     isLoggedIn,
     isAdmin:
       isLoggedIn && (user?.role === 'ADMIN' || user?.role === 'DEVELOPER'),
     isDeveloper: isLoggedIn && user?.role === 'DEVELOPER',
     isUser: isLoggedIn && user?.role === 'USER',
+    hasClerkAuth,
     user: isLoggedIn ? user : undefined,
   } as AuthUserHelpersReturnType;
 };
