@@ -55,75 +55,78 @@ export type User = mongoose.Document &
     removeToken: (token: string) => boolean;
   };
 
-export const UserSchema = new mongoose.Schema<User>({
-  // Clerk integration
-  clerkId: {
-    type: String,
-    unique: true,
-    sparse: true, // Allows null values while maintaining uniqueness
-    index: true, // Index for fast lookups
-  },
-  // Core user fields
-  firstname: {
-    type: String,
-  },
-  lastname: {
-    type: String,
-  },
-  role: {
-    type: String,
-    enum: ['ADMIN', 'USER', 'DEVELOPER'],
-    default: 'USER',
-  },
-  email: {
-    type: String,
-    unique: true,
-    required: [true, 'Please add a User email'],
-    validate: {
-      validator(v: string) {
-        // check if email is valid
-        // eslint-disable-next-line no-useless-escape
-        return /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(v);
+export const UserSchema = new mongoose.Schema<User>(
+  {
+    // Clerk integration
+    clerkId: {
+      type: String,
+      unique: true,
+      sparse: true, // Allows null values while maintaining uniqueness
+      index: true, // Index for fast lookups
+    },
+    // Core user fields
+    firstname: {
+      type: String,
+    },
+    lastname: {
+      type: String,
+    },
+    role: {
+      type: String,
+      enum: ['ADMIN', 'USER', 'DEVELOPER'],
+      default: 'USER',
+    },
+    email: {
+      type: String,
+      unique: true,
+      required: [true, 'Please add a User email'],
+      validate: {
+        validator(v: string) {
+          // check if email is valid
+          // eslint-disable-next-line no-useless-escape
+          return /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(v);
+        },
+        message: (props) => `${props.value} is not a valid email!`,
       },
-      message: (props) => `${props.value} is not a valid email!`,
     },
-  },
-  FCMTokens: {
-    type: [String],
-    default: [],
-  },
-  // Legacy fields - will be removed after migration
-  password: {
-    type: String,
-  },
-  resetKey: {
-    _id: false,
-    value: {
+    FCMTokens: {
+      type: [String],
+      default: [],
+    },
+    // Legacy fields - will be removed after migration
+    password: {
       type: String,
     },
-    expiresAt: {
-      type: Date,
+    resetKey: {
+      _id: false,
+      value: {
+        type: String,
+      },
+      expiresAt: {
+        type: Date,
+      },
     },
-  },
-  session: {
-    type: String,
-  },
-  accountType: {
-    type: String,
-    enum: ['GOOGLE', 'PASSWORD', 'EMAIL', 'CLERK'],
-    default: 'CLERK',
-  },
-  loginCode: {
-    code: {
+    session: {
       type: String,
     },
-    created: {
-      type: Date,
+    accountType: {
+      type: String,
+      enum: ['GOOGLE', 'PASSWORD', 'EMAIL', 'CLERK'],
+      default: 'CLERK',
+    },
+    loginCode: {
+      code: {
+        type: String,
+      },
+      created: {
+        type: Date,
+      },
     },
   },
-}, {
-  timestamps: true, // Adds createdAt and updatedAt fields
-});
+  {
+    timestamps: true, // Adds createdAt and updatedAt fields
+  },
+);
 
 UserSchema.methods.comparePasswords = function (candidatePassword?: string) {
   const user = this as User;

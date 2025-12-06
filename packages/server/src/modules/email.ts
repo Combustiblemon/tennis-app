@@ -49,10 +49,4 @@ export const sendEmail = async ({
   // );
 };
 
-export const sendLoginCodeEmail = async (email: string, code: string) => {
-  sendEmail({
-    emails: [email],
-    subject: 'login code',
-    html: `<h1>Ο κωδικός σύνδεσης είναι <b>${code}</b></h1>`,
-  });
-};
+// Legacy login code email function removed - authentication is now handled by Clerk

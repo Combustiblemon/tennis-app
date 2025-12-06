@@ -21,25 +21,7 @@ export class UserService {
         return await this.updateFromClerk(user, clerkUser);
       }
 
-      // If not found by Clerk ID, try to find by email for migration
-      const primaryEmail = clerkUser.emailAddresses.find(
-        (email) => email.id === clerkUser.primaryEmailAddressId,
-      );
-
-      if (primaryEmail) {
-        user = await UserModel.findOne({ email: primaryEmail.emailAddress });
-
-        if (user) {
-          // Link existing user with Clerk ID
-          user.clerkId = clerkUser.id;
-          user.accountType = 'CLERK';
-          await user.save();
-          signale.info(`Linked existing user ${user.email} with Clerk ID ${clerkUser.id}`);
-          return user;
-        }
-      }
-
-      // Create new user
+      // Create new user - all new registrations get role 'USER'
       return await this.createFromClerk(clerkUser);
     } catch (error) {
       signale.error('Error in findOrCreateFromClerk:', error);
@@ -49,6 +31,7 @@ export class UserService {
 
   /**
    * Create a new user from Clerk user data
+   * All new registrations are created with role 'USER'
    */
   static async createFromClerk(clerkUser: ClerkUser): Promise<User> {
     const primaryEmail = clerkUser.emailAddresses.find(
@@ -59,27 +42,25 @@ export class UserService {
       throw new Error('No primary email found for Clerk user');
     }
 
-    // Get role from Clerk metadata (default to USER)
-    const role = (clerkUser.publicMetadata?.role as string) || 'USER';
-
     const userData = {
       clerkId: clerkUser.id,
       email: primaryEmail.emailAddress,
       firstname: clerkUser.firstName || '',
       lastname: clerkUser.lastName || '',
-      role: ['ADMIN', 'USER', 'DEVELOPER'].includes(role) ? role : 'USER',
+      role: 'USER' as const, // All new registrations get role USER
       accountType: 'CLERK' as const,
       FCMTokens: [],
     };
 
     const user = await UserModel.create(userData);
-    signale.info(`Created new user from Clerk: ${user.email} (${user.clerkId})`);
+    signale.info(`Created new user from Clerk: ${user.email} (${user.clerkId}) with role USER`);
 
     return user;
   }
 
   /**
    * Update existing user with Clerk data
+   * Note: Role is not updated from Clerk metadata - roles are managed separately
    */
   static async updateFromClerk(user: User, clerkUser: ClerkUser): Promise<User> {
     const primaryEmail = clerkUser.emailAddresses.find(
@@ -93,11 +74,8 @@ export class UserService {
     user.firstname = clerkUser.firstName || user.firstname;
     user.lastname = clerkUser.lastName || user.lastname;
 
-    // Update role from Clerk metadata if present
-    const clerkRole = clerkUser.publicMetadata?.role as string;
-    if (clerkRole && ['ADMIN', 'USER', 'DEVELOPER'].includes(clerkRole)) {
-      user.role = clerkRole as 'ADMIN' | 'USER' | 'DEVELOPER';
-    }
+    // Role is not updated from Clerk - roles are managed in the database
+    // Only update name and email from Clerk
 
     await user.save();
     return user;
