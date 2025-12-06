@@ -1,17 +1,10 @@
-import bcrypt from 'bcryptjs';
 import mongoose, { Model, Types } from 'mongoose';
 import z from 'zod';
 
-// 10 minutes - keeping for backward compatibility during migration
-const LOGIN_CODE_LIFETIME = 10 * 60 * 1000;
-
 export const UserValidator = z.object({
-  clerkId: z.string().optional(), // Clerk user ID for new auth system
+  clerkId: z.string().optional(),
   role: z.enum(['ADMIN', 'USER', 'DEVELOPER']).default('USER'),
   email: z.string().email(),
-  // Legacy fields - will be removed after migration
-  password: z.string().min(6).optional(),
-  accountType: z.enum(['GOOGLE', 'PASSWORD', 'EMAIL', 'CLERK']).optional(),
   firstname: z.string().max(60).optional(),
   lastname: z.string().max(60).optional(),
 });
@@ -32,24 +25,8 @@ export type UserSanitized = Pick<User, SanitizedUserFields>;
 export type User = mongoose.Document &
   z.infer<typeof UserValidator> & {
     _id: Types.ObjectId;
-    clerkId?: string; // Clerk user ID for linking accounts
-    // Legacy fields - will be removed after migration
-    resetKey?: {
-      value: string;
-      expiresAt: Date;
-    };
+    clerkId?: string;
     FCMTokens?: Array<string>;
-    session?: string;
-    loginCode?: {
-      code: string;
-      created: Date;
-    };
-    // Legacy methods - will be removed after migration
-    comparePasswords: (candidatePassword?: string) => boolean;
-    compareResetKey: (resetKey?: string) => boolean;
-    compareSessions: (session?: string) => boolean;
-    compareLoginCode: (code?: string) => boolean;
-    // Current methods
     sanitize: () => UserSanitized;
     addToken: (token: string) => boolean;
     removeToken: (token: string) => boolean;
@@ -93,69 +70,11 @@ export const UserSchema = new mongoose.Schema<User>(
       type: [String],
       default: [],
     },
-    // Legacy fields - will be removed after migration
-    password: {
-      type: String,
-    },
-    resetKey: {
-      _id: false,
-      value: {
-        type: String,
-      },
-      expiresAt: {
-        type: Date,
-      },
-    },
-    session: {
-      type: String,
-    },
-    accountType: {
-      type: String,
-      enum: ['GOOGLE', 'PASSWORD', 'EMAIL', 'CLERK'],
-      default: 'CLERK',
-    },
-    loginCode: {
-      code: {
-        type: String,
-      },
-      created: {
-        type: Date,
-      },
-    },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt fields
   },
 );
-
-UserSchema.methods.comparePasswords = function (candidatePassword?: string) {
-  const user = this as User;
-
-  if (!candidatePassword || !user.password) {
-    return false;
-  }
-
-  return bcrypt.compareSync(candidatePassword, user.password);
-};
-
-UserSchema.methods.compareResetKey = function (resetKey?: string) {
-  if (!resetKey) {
-    return false;
-  }
-
-  const user = this as User;
-  return (
-    resetKey === user.resetKey?.value && new Date() < user.resetKey?.expiresAt
-  );
-};
-
-UserSchema.methods.compareSessions = function (session?: string) {
-  if (!session) {
-    return false;
-  }
-
-  return session === (this as User).session;
-};
 
 UserSchema.methods.addToken = function (token?: string) {
   if (!token) {
@@ -199,26 +118,6 @@ UserSchema.methods.sanitize = function (): UserSanitized {
       }) satisfies UserSanitized,
   });
 };
-
-UserSchema.methods.compareLoginCode = function (code?: string): boolean {
-  if (!code) {
-    return false;
-  }
-
-  return (
-    code.trim().toLowerCase() === (this as User).loginCode?.code &&
-    new Date().getTime() <
-      ((this as User).loginCode?.created.getTime() || 0) + LOGIN_CODE_LIFETIME
-  );
-};
-
-UserSchema.pre<User>('save', function (next) {
-  if (this.isModified('password') && this.password) {
-    this.password = bcrypt.hashSync(this.password, 10);
-  }
-
-  next();
-});
 
 const UserModel =
   (mongoose.models.User as Model<User>) ||

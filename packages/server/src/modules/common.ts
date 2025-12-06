@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request } from 'express';
 import { Types } from 'mongoose';
 import signale from 'signale';
 import { ZodError, ZodIssue } from 'zod';
@@ -47,35 +47,6 @@ export const onSuccess = <Data, Endpoint extends string>(
     data: data ?? ({} as Data),
     ...(operation ? { operation } : {}),
   };
-};
-
-export const sessionCookie = {
-  set: (res: Response, session: string) => {
-    if (!session) {
-      return;
-    }
-
-    res.cookie('session', session, {
-      httpOnly: true,
-      maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
-      secure: false,
-      sameSite: 'none', // Critical for iOS Safari compatibility
-      path: '/',
-      ...(process.env.COOKIE_DOMAIN && { domain: process.env.COOKIE_DOMAIN }), // Optional domain configuration
-    });
-  },
-  get: (req: Request): string | undefined => {
-    return req.cookies.session || undefined;
-  },
-  clear: (res: Response) => {
-    res.clearCookie('session', {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'none',
-      path: '/',
-      ...(process.env.COOKIE_DOMAIN && { domain: process.env.COOKIE_DOMAIN }), // Optional domain configuration
-    });
-  },
 };
 
 export enum ERRORS {
