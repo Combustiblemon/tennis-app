@@ -5,6 +5,7 @@ import express from 'express';
 import signale from 'signale';
 
 import { isProduction } from './modules/common';
+import { clerkAuth, initClerk } from './modules/clerk';
 import dbConnect from './modules/dbConnect';
 import { initEmailClient } from './modules/email';
 import { errorHandler } from './modules/error';
@@ -13,11 +14,15 @@ import { setupRoutes } from './modules/routes';
 
 const app = express();
 
+// Initialize services
 initEmailClient();
-
 await dbConnect();
-
 initFirebaseApp();
+
+// Initialize Clerk authentication
+if (!initClerk()) {
+  signale.warn('Clerk initialization failed - authentication may not work properly');
+}
 
 const findOrigin = (origin: string) =>
   new RegExp(/(?<=https:\/\/).*?(?=\/)/, '').exec(origin)?.[0] || '';
@@ -49,6 +54,9 @@ app.use(express.json({ limit: '5mb' }));
 
 app.use(compression());
 app.use(cookieParser(process.env.SECRET));
+
+// Add Clerk middleware
+app.use(clerkAuth);
 
 setupRoutes(app);
 
