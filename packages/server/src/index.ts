@@ -4,7 +4,9 @@ import cors from 'cors';
 import express from 'express';
 import signale from 'signale';
 
+import { authConfig } from './config/authConfig';
 import { isProduction } from './modules/common';
+import { clerkAuth, initClerk } from './modules/clerk';
 import dbConnect from './modules/dbConnect';
 import { initEmailClient } from './modules/email';
 import { errorHandler } from './modules/error';
@@ -13,11 +15,31 @@ import { setupRoutes } from './modules/routes';
 
 const app = express();
 
+// Initialize services
 initEmailClient();
-
 await dbConnect();
-
 initFirebaseApp();
+
+// Initialize and configure authentication
+const logAuthConfig = () => {
+  signale.info('🔐 Authentication Configuration:');
+  signale.success('  Mode: Clerk Authentication Only');
+  signale.info(`  Auto user creation: ${authConfig.enableAutoUserCreation ? '✅' : '❌'}`);
+  signale.info(`  User migration: ${authConfig.enableUserMigration ? '✅' : '❌'}`);
+  signale.info(`  Role sync: ${authConfig.enableRoleSync ? '✅' : '❌'}`);
+
+  if (authConfig.logAuthAttempts || authConfig.logMigrationStatus) {
+    signale.info(`  Debug logging: ✅ Enabled`);
+  }
+};
+
+// Initialize Clerk - required for authentication
+if (!initClerk()) {
+  signale.error('Clerk initialization failed - server cannot start without authentication');
+  process.exit(1);
+}
+
+logAuthConfig();
 
 const findOrigin = (origin: string) =>
   new RegExp(/(?<=https:\/\/).*?(?=\/)/, '').exec(origin)?.[0] || '';
@@ -49,6 +71,9 @@ app.use(express.json({ limit: '5mb' }));
 
 app.use(compression());
 app.use(cookieParser(process.env.SECRET));
+
+// Add Clerk middleware
+app.use(clerkAuth);
 
 setupRoutes(app);
 

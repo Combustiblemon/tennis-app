@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@clerk/express": "^1.7.55",
     "@swc-node/register": "^1.10.9",
     "@swc/core": "^1.10.8",
     "bcryptjs": "^2.4.3",

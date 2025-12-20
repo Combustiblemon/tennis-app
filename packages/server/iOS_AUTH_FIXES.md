@@ -18,7 +18,7 @@ This document outlines the fixes implemented to resolve iOS-specific authenticat
 ### 2. Added Session Refresh Endpoint
 
 - **File**: `src/handlers/auth.ts`
-- **New Endpoint**: `POST /auth/refresh`
+- **Note**: Legacy auth endpoints have been removed. Authentication is now handled by Clerk.
 - **Purpose**: Allows graceful session renewal without full re-login
 - **Features**:
   - Validates existing session
@@ -71,24 +71,9 @@ SECRET=your-cookie-secret
 ### 1. Implement Session Refresh
 
 ```javascript
-// Call this periodically or when receiving 401 errors
-const refreshSession = async () => {
-  try {
-    const response = await fetch('/auth/refresh', {
-      method: 'POST',
-      credentials: 'include' // Important for cookies
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      // Update user state with refreshed data
-      return data;
-    }
-  } catch (error) {
-    // Redirect to login
-    window.location.href = '/login';
-  }
-};
+// Note: Legacy session refresh endpoint has been removed.
+// Clerk handles session management automatically.
+// If you need to refresh authentication, use Clerk's session refresh methods.
 ```
 
 ### 2. Handle 401 Errors Gracefully
@@ -130,10 +115,9 @@ setInterval(() => {
 ### 2. Test Cookie Behavior
 
 ```bash
-# Check cookie headers in production
-curl -i -X POST https://your-domain.com/auth/verifyLogin \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","loginCode":"123456"}'
+# Note: Legacy auth endpoints have been removed.
+# Authentication is now handled by Clerk.
+# Use Clerk's authentication methods instead.
 ```
 
 Look for:

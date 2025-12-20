@@ -1,0 +1,112 @@
+# Authentication Configuration Guide
+
+This guide explains how to configure the authentication system during the migration from custom auth to Clerk.
+
+## Environment Variables
+
+Add these to your `.env` file to control the authentication behavior:
+
+### Required Clerk Variables
+```env
+CLERK_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
+CLERK_SECRET_KEY=sk_test_your_secret_key_here
+```
+
+### Migration Control Variables (Optional)
+```env
+# Authentication Strategy
+USE_CLERK_AUTH=false              # Use only Clerk auth (full migration)
+USE_HYBRID_AUTH=true              # Support both Clerk and legacy (default)
+ALLOW_LEGACY_AUTH=true            # Allow legacy session auth (default)
+
+# Feature Flags
+ENABLE_AUTO_USER_CREATION=true    # Auto-create users from Clerk (default)
+ENABLE_USER_MIGRATION=true        # Allow linking existing users (default)
+ENABLE_ROLE_SYNC=true             # Sync roles to Clerk metadata (default)
+
+# Debug Options
+LOG_AUTH_ATTEMPTS=true            # Log auth attempts (default in dev)
+LOG_MIGRATION_STATUS=true         # Log migration status (default in dev)
+```
+
+## Authentication Mode
+
+### Clerk Only Mode (Current)
+- Only Clerk authentication is accepted
+- All users authenticate through Clerk
+- Legacy auth endpoints have been removed
+- Automatic user creation/linking on first Clerk login
+
+## Authentication Flow
+
+### Clerk Authentication Flow
+1. User authenticates via Clerk (handled by Clerk SDK on frontend)
+2. Clerk middleware validates JWT token
+3. System checks for user in database by Clerk ID
+4. If user not found, automatically creates/links user
+5. User data is attached to request (`req.user`)
+6. Protected routes can access authenticated user
+
+### User Creation/Linking
+- When a Clerk user logs in for the first time:
+  1. System checks if user exists by Clerk ID
+  2. If not found, checks by email for existing user
+  3. If existing user found, links with Clerk ID
+  4. If no existing user, creates new user from Clerk data
+  5. Syncs role information between Clerk and database
+
+## Configuration Examples
+
+### Development Setup
+```env
+ENABLE_AUTO_USER_CREATION=true
+ENABLE_USER_MIGRATION=true
+ENABLE_ROLE_SYNC=true
+LOG_AUTH_ATTEMPTS=true
+LOG_MIGRATION_STATUS=true
+```
+
+### Production Setup
+```env
+ENABLE_AUTO_USER_CREATION=true
+ENABLE_ROLE_SYNC=true
+LOG_AUTH_ATTEMPTS=false
+LOG_MIGRATION_STATUS=false
+```
+
+## Monitoring Migration
+
+The system logs authentication attempts and migration status when enabled:
+
+```
+[INFO] User authenticated via Clerk: user@example.com (clerk_123)
+[INFO] Linked existing user user@example.com with Clerk ID clerk_123
+[INFO] Created new user from Clerk: newuser@example.com (clerk_456)
+[WARN] User with Clerk ID clerk_789 not found in database
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **"User not found" errors**
+   - Enable `ENABLE_AUTO_USER_CREATION=true`
+   - Run migration scripts to link existing users
+
+2. **Authentication loops**
+   - Check Clerk configuration in dashboard
+   - Verify environment variables are set correctly
+
+3. **Role sync issues**
+   - Ensure `ENABLE_ROLE_SYNC=true`
+   - Check Clerk user metadata configuration
+
+### Debug Mode
+
+Enable debug logging to troubleshoot issues:
+```env
+LOG_AUTH_ATTEMPTS=true
+LOG_MIGRATION_STATUS=true
+```
+
+This will provide detailed logs about authentication attempts and user migration status.

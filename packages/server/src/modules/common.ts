@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request } from 'express';
 import { Types } from 'mongoose';
 import signale from 'signale';
 import { ZodError, ZodIssue } from 'zod';
@@ -49,53 +49,15 @@ export const onSuccess = <Data, Endpoint extends string>(
   };
 };
 
-export const sessionCookie = {
-  set: (res: Response, session: string) => {
-    if (!session) {
-      return;
-    }
-
-    res.cookie('session', session, {
-      httpOnly: true,
-      maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
-      secure: false,
-      sameSite: 'none', // Critical for iOS Safari compatibility
-      path: '/',
-      ...(process.env.COOKIE_DOMAIN && { domain: process.env.COOKIE_DOMAIN }), // Optional domain configuration
-    });
-  },
-  get: (req: Request): string | undefined => {
-    return req.cookies.session || undefined;
-  },
-  clear: (res: Response) => {
-    res.clearCookie('session', {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'none',
-      path: '/',
-      ...(process.env.COOKIE_DOMAIN && { domain: process.env.COOKIE_DOMAIN }), // Optional domain configuration
-    });
-  },
-};
-
 export enum ERRORS {
   INVALID_DATA = 'invalid_data',
   INVALID_QUERY = 'invalid_query',
   UNEXPECTED_ERROR = 'unexpected_error',
-  INVALID_CREDENTIALS = 'invalid_credentials',
-  LOGIN_ERROR = 'login_error',
   INTERNAL_SERVER_ERROR = 'internal_server_error',
   USER_EXISTS = 'user_exists',
   USER_NOT_FOUND = 'user_not_found',
-  PASSWORDS_DO_NOT_MATCH = 'passwords_do_not_match',
   INVALID_EMAIL = 'invalid_email',
-  INVALID_RESET_KEY = 'invalid_reset_key',
-  RESET_KEY_EXPIRED = 'reset_key_expired',
-  RESET_KEY_NOT_FOUND = 'reset_key_not_found',
-  INVALID_RESET_REQUEST = 'invalid_reset_request',
-  INVALID_PASSWORD = 'invalid_password',
   UNAUTHORIZED = 'unauthorized',
-  SESSION_EXPIRED = 'session_expired',
   RESOURCE_NOT_FOUND = 'resource_not_found',
   RESERVATION_TIME_CONFLICT = 'reservation_time_conflict',
   DATE_IN_THE_PAST = 'date_in_the_past',
@@ -238,18 +200,24 @@ type AuthUserHelpersReturnType = (
 ) & {
   isAdmin: boolean;
   isUser: boolean;
+  isDeveloper: boolean;
+  hasClerkAuth: boolean;
 };
 
 export const authUserHelper = (req: Request) => {
   const user = req.user;
+  const clerkAuth = req.auth;
 
   const isLoggedIn = !!user;
+  const hasClerkAuth = !!clerkAuth?.userId;
+
   return {
     isLoggedIn,
     isAdmin:
       isLoggedIn && (user?.role === 'ADMIN' || user?.role === 'DEVELOPER'),
     isDeveloper: isLoggedIn && user?.role === 'DEVELOPER',
     isUser: isLoggedIn && user?.role === 'USER',
+    hasClerkAuth,
     user: isLoggedIn ? user : undefined,
   } as AuthUserHelpersReturnType;
 };
