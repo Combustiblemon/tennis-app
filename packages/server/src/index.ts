@@ -64,6 +64,8 @@ app.use(
     optionsSuccessStatus: 200,
     preflightContinue: false,
     exposedHeaders: ['set-cookie'],
+    // Allow Authorization header for Bearer token authentication
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   }),
 );
 

@@ -43,6 +43,9 @@ export const clerkClient = createClerkClient({
 });
 
 // Clerk middleware for Express
+// This middleware automatically reads tokens from:
+// 1. Authorization header (Bearer token)
+// 2. Cookies (__session cookie)
 // Note: iOS compatibility headers are set in the auth middleware (clerkAuth.ts)
 export const clerkAuth = clerkMiddleware();
 

@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import signale from 'signale';
 
+import { authConfig } from '../config/authConfig';
 import { ERRORS } from '../modules/common';
 import { ServerError } from '../modules/error';
 import UserService from '../services/userService';
@@ -21,15 +22,61 @@ export const clerkUserAuth = async (
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
 
-    const { userId } = req.auth?.() || { userId: null };
+    // Debug logging for auth issues
+    const auth = req.auth?.();
+    const { userId } = auth || { userId: null };
+
+    // Check Authorization header format
+    const authHeader = req.headers.authorization;
+    const hasBearerToken = authHeader && authHeader.startsWith('Bearer ');
+
+    if (authConfig.logAuthAttempts) {
+      signale.debug('Auth check:', {
+        hasAuth: !!auth,
+        userId,
+        hasBearerToken,
+        headers: {
+          authorization: authHeader
+            ? hasBearerToken
+              ? 'Bearer token present'
+              : 'Invalid format'
+            : 'missing',
+          cookie: req.headers.cookie ? 'present' : 'missing',
+        },
+      });
+    }
 
     if (!userId) {
+      if (authConfig.logAuthAttempts) {
+        signale.warn('Unauthorized request - no userId found', {
+          path: req.path,
+          method: req.method,
+          hasAuthHeader: !!authHeader,
+          hasBearerToken,
+          authObject: auth,
+        });
+      }
+
+      // Provide helpful error message based on what's missing
+      const errorReason = !authHeader
+        ? 'missing_authorization_header'
+        : !hasBearerToken
+          ? 'invalid_token_format'
+          : 'missing_clerk_user_id';
+
       return next(
         new ServerError({
           error: ERRORS.UNAUTHORIZED,
           status: 401,
           operation: req.method as 'GET',
-          data: { reason: 'missing_clerk_user_id' },
+          data: {
+            reason: errorReason,
+            message: !authHeader
+              ? 'Authorization header is missing. Please include: Authorization: Bearer <token>'
+              : !hasBearerToken
+                ? 'Invalid token format. Expected: Authorization: Bearer <token>'
+                : 'Invalid or expired Clerk session token',
+          },
         }),
       );
     }
@@ -79,15 +126,42 @@ export const clerkAdminAuth = async (
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
 
-    const { userId } = req.auth?.() || { userId: null };
+    const auth = req.auth?.();
+    const { userId } = auth || { userId: null };
+
+    // Check Authorization header format
+    const authHeader = req.headers.authorization;
+    const hasBearerToken = authHeader && authHeader.startsWith('Bearer ');
 
     if (!userId) {
+      if (authConfig.logAuthAttempts) {
+        signale.warn('Admin auth failed - no userId found', {
+          path: req.path,
+          method: req.method,
+          hasAuthHeader: !!authHeader,
+          hasBearerToken,
+        });
+      }
+
+      const errorReason = !authHeader
+        ? 'missing_authorization_header'
+        : !hasBearerToken
+          ? 'invalid_token_format'
+          : 'missing_clerk_user_id';
+
       return next(
         new ServerError({
           error: ERRORS.UNAUTHORIZED,
           status: 401,
           operation: req.method as 'GET',
-          data: { reason: 'missing_clerk_user_id' },
+          data: {
+            reason: errorReason,
+            message: !authHeader
+              ? 'Authorization header is missing. Please include: Authorization: Bearer <token>'
+              : !hasBearerToken
+                ? 'Invalid token format. Expected: Authorization: Bearer <token>'
+                : 'Invalid or expired Clerk session token',
+          },
         }),
       );
     }
