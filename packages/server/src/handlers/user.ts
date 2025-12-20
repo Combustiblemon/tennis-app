@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 
-import UserModel from '../models/User';
 import { authUserHelper, ERRORS, onSuccess } from '../modules/common';
 import { ServerError } from '../modules/error';
+import UserService from '../services/userService';
 
 const updateOne = async (req: Request, res: Response) => {
   const { user } = authUserHelper(req);
@@ -36,10 +36,7 @@ const updateOne = async (req: Request, res: Response) => {
     });
   }
 
-  await UserModel.findByIdAndUpdate(user._id, {
-    firstname: data.firstname,
-    lastname: data.lastname,
-  });
+  await UserService.updateName(user.id, data.firstname, data.lastname);
 
   res.status(200).json(onSuccess({ name: data }, 'user/id', 'PUT'));
 };
@@ -56,7 +53,16 @@ export const getCurrent = async (req: Request, res: Response) => {
     });
   }
 
-  res.status(200).json(onSuccess(user.sanitize(), 'user', 'GET'));
+  // Return sanitized user data (public data only)
+  const sanitized = {
+    id: user.id,
+    email: user.email,
+    firstname: user.firstname,
+    lastname: user.lastname,
+    role: user.role,
+  };
+
+  res.status(200).json(onSuccess(sanitized, 'user', 'GET'));
 };
 
 export default {

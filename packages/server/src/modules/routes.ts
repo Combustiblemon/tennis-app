@@ -1,13 +1,13 @@
 import express, { Express, Router } from 'express';
 
+// Auth configuration
+import { authConfig } from '../config/authConfig';
 import adminCourt from '../handlers/admin/court';
 import adminReservation from '../handlers/admin/reservation';
 import court from '../handlers/court';
 import notification from '../handlers/notification';
 import reservation from '../handlers/reservation';
 import user from '../handlers/user';
-// Auth configuration
-import { authConfig } from '../config/authConfig';
 // Clerk-based auth middleware
 import { clerkAdminAuth, clerkUserAuth } from '../middleware/clerkAuth';
 // Migration status tracking

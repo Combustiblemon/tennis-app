@@ -2,7 +2,7 @@ import firebaseAdmin from 'firebase-admin';
 import { initializeApp } from 'firebase-admin/app';
 import signale from 'signale';
 
-import UserModel from '../models/User';
+import UserService from '../services/userService';
 
 const { credential, messaging } = firebaseAdmin;
 
@@ -81,21 +81,32 @@ export const sendMessageToTokens = async (
         JSON.stringify(failedTokens, null, 2),
       );
 
-      const users = await UserModel.find({
-        FCMTokens: { $in: failedTokens },
-      });
+      // Get all users and find which ones have the failed tokens
+      // Note: This is not optimal, but Clerk doesn't support querying by metadata
+      // For better performance, consider caching user data or using a different approach
+      const allUsers = await UserService.getUsersByRole('USER');
+      const adminUsers = await UserService.getAdminUsers();
+      const allUsersList = [...allUsers, ...adminUsers];
 
-      users.forEach((user) => {
-        failedTokens.forEach((token) => {
-          user.removeToken(token);
-        });
-        user.save();
-      });
+      const usersWithFailedTokens = allUsersList.filter((user) =>
+        user.FCMTokens.some((token) => failedTokens.includes(token)),
+      );
+
+      // Remove failed tokens from each user
+      await Promise.allSettled(
+        usersWithFailedTokens.map(async (user) => {
+          for (const token of failedTokens) {
+            if (user.FCMTokens.includes(token)) {
+              await UserService.removeFCMToken(user.id, token);
+            }
+          }
+        }),
+      );
 
       signale.info(
         'Removed failed tokens from users:',
         JSON.stringify(
-          users.map((u) => u.email),
+          usersWithFailedTokens.map((u) => u.email),
           null,
           2,
         ),

@@ -5,7 +5,7 @@ import { ZodError, ZodIssue } from 'zod';
 
 import { CourtDataType } from '../models/Court';
 import { ReservationDataType } from '../models/Reservation';
-import { User } from '../models/User';
+import { User } from '../services/userService';
 import { ServerError } from './error';
 import { APIResponse } from './responseTypes';
 
@@ -206,7 +206,7 @@ type AuthUserHelpersReturnType = (
 
 export const authUserHelper = (req: Request) => {
   const user = req.user;
-  const clerkAuth = req.auth;
+  const clerkAuth = req.auth?.();
 
   const isLoggedIn = !!user;
   const hasClerkAuth = !!clerkAuth?.userId;

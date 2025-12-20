@@ -8,7 +8,7 @@ import ReservationModel, {
   ReservationValidator,
   ReservationValidatorPartial,
 } from '../models/Reservation';
-import UserModel from '../models/User';
+import UserService from '../services/userService';
 import {
   authUserHelper,
   ERRORS,
@@ -67,8 +67,8 @@ const getOne = async (req: Request, res: Response) => {
   if (
     reservations.some(
       (reservation) =>
-        reservation.owner?.toString() !== user._id.toString() &&
-        !reservation.people.includes(user._id.toString() || ''),
+        reservation.owner !== user.id &&
+        !reservation.people.includes(user.id),
     )
   ) {
     throw new ServerError({
@@ -151,7 +151,7 @@ const updateOne = async (req: Request, res: Response) => {
     });
   }
 
-  if (reservation.owner?.toString() !== user._id.toString()) {
+  if (reservation.owner !== user.id) {
     throw new ServerError({
       error: ERRORS.UNAUTHORIZED,
       operation: req.method as 'GET',
@@ -190,11 +190,7 @@ const updateOne = async (req: Request, res: Response) => {
   reservation.set(data);
 
   try {
-    const admins = await UserModel.find({
-      role: { $in: ['ADMIN', 'DEVELOPER'] },
-    })
-      .select('FCMTokens email')
-      .lean();
+    const admins = await UserService.getAdminUsers();
 
     const adminTokens = admins.reduce((acc, cur) => {
       return cur.FCMTokens ? acc.concat(cur.FCMTokens) : acc;
@@ -209,13 +205,11 @@ const updateOne = async (req: Request, res: Response) => {
     });
 
     if (failedTokens.length) {
-      const developers = await UserModel.find({
-        role: 'DEVELOPER',
-      }).select('FCMTokens');
+      const developers = await UserService.getUsersByRole('DEVELOPER');
 
       developers.forEach((developer) => {
-        if (developer?.FCMTokens) {
-          sendMessageToTokens(developer?.FCMTokens, {
+        if (developer?.FCMTokens && developer.FCMTokens.length > 0) {
+          sendMessageToTokens(developer.FCMTokens, {
             title: 'Token error',
             body: `${admins
               .filter((a) => a.FCMTokens?.some((t) => failedTokens.includes(t)))
@@ -312,15 +306,11 @@ const postOne = async (req: Request, res: Response) => {
 
   const reservation = await ReservationModel.create({
     ...data,
-    owner: user._id,
+    owner: user.id,
   });
 
   try {
-    const admins = await UserModel.find({
-      role: { $in: ['ADMIN', 'DEVELOPER'] },
-    })
-      .select('FCMTokens email')
-      .lean();
+    const admins = await UserService.getAdminUsers();
 
     const adminTokens = admins.reduce((acc, cur) => {
       return cur.FCMTokens ? acc.concat(cur.FCMTokens) : acc;
@@ -335,13 +325,11 @@ const postOne = async (req: Request, res: Response) => {
     });
 
     if (failedTokens.length) {
-      const developers = await UserModel.find({
-        role: 'DEVELOPER',
-      }).select('FCMTokens');
+      const developers = await UserService.getUsersByRole('DEVELOPER');
 
       developers.forEach((developer) => {
-        if (developer?.FCMTokens) {
-          sendMessageToTokens(developer?.FCMTokens, {
+        if (developer?.FCMTokens && developer.FCMTokens.length > 0) {
+          sendMessageToTokens(developer.FCMTokens, {
             title: 'Token error',
             body: `${admins
               .filter((a) => a.FCMTokens?.some((t) => failedTokens.includes(t)))
@@ -435,8 +423,8 @@ const getMany = async (req: Request, res: Response) => {
   const offsetNumber = Number(offset);
 
   if (offset && !isNaN(offsetNumber)) {
-    const reservations = await ReservationModel.find({
-      owner: user._id,
+  const reservations = await ReservationModel.find({
+    owner: user.id,
       ...(Array.isArray(date)
         ? dateQuery
         : {
@@ -460,7 +448,7 @@ const getMany = async (req: Request, res: Response) => {
   }).lean();
 
   const reservationsSanitized = reservationsData.map((r) => {
-    if (r.owner?.toString() === user._id.toString()) {
+    if (r.owner === user.id) {
       return r;
     }
 
@@ -504,7 +492,7 @@ const deleteMany = async (req: Request, res: Response) => {
   for (let i = 0; i < reservations.length; i += 1) {
     const reservation = reservations[i];
 
-    if (reservation.owner?.toString() !== user._id.toString()) {
+    if (reservation.owner !== user.id) {
       throw new ServerError({
         error: ERRORS.UNAUTHORIZED,
         operation: req.method as 'GET',
@@ -530,11 +518,7 @@ const deleteMany = async (req: Request, res: Response) => {
     });
 
     try {
-      const admins = await UserModel.find({
-        role: { $in: ['ADMIN', 'DEVELOPER'] },
-      })
-        .select('FCMTokens email')
-        .lean();
+      const admins = await UserService.getAdminUsers();
 
       const adminTokens = admins.reduce((acc, cur) => {
         return cur.FCMTokens ? acc.concat(cur.FCMTokens) : acc;
@@ -559,13 +543,11 @@ const deleteMany = async (req: Request, res: Response) => {
         // make failed tokens unique
         const uniqueFailedTokens = [...new Set(failedTokens)];
 
-        const developers = await UserModel.find({
-          role: 'DEVELOPER',
-        }).select('FCMTokens');
+        const developers = await UserService.getUsersByRole('DEVELOPER');
 
         developers.forEach((developer) => {
-          if (developer?.FCMTokens) {
-            sendMessageToTokens(developer?.FCMTokens, {
+          if (developer?.FCMTokens && developer.FCMTokens.length > 0) {
+            sendMessageToTokens(developer.FCMTokens, {
               title: 'Token error',
               body: `${admins
                 .filter((a) =>

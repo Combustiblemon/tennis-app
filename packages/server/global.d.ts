@@ -1,11 +1,11 @@
 import { User as ClerkUser } from '@clerk/express';
-import { User } from './src/models/User';
+import { User } from './src/services/userService';
 
 declare global {
   namespace Express {
     interface Request {
       user?: User | undefined;
-      auth?: {
+      auth?: () => {
         userId: string | null;
         sessionId: string | null;
         orgId: string | null;

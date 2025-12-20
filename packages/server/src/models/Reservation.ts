@@ -9,8 +9,8 @@ const typeEnumValues = ['SINGLE', 'DOUBLE', 'TRAINING', 'PERSONAL'] as const;
 export const ReservationValidator = z.object({
   type: z.enum(typeEnumValues),
   datetime: z.string(),
-  people: z.array(z.string().max(50)),
-  owner: z.string().refine(zodObjectId).optional(),
+  people: z.array(z.string().max(50)), // Clerk userIds
+  owner: z.string().optional(), // Clerk userId (string, not ObjectId)
   court: z.string(),
   status: z.enum(statusEnumValues).default('APPROVED'),
   paid: z.boolean().default(false),
@@ -25,12 +25,9 @@ type ReservationSanitized = Pick<
   'type' | 'court' | 'datetime' | 'duration' | 'notes' | '_id'
 >;
 
-export type ReservationDataType = Omit<
-  z.infer<typeof ReservationValidator>,
-  'owner'
-> & {
+export type ReservationDataType = z.infer<typeof ReservationValidator> & {
   _id: mongoose.Types.ObjectId;
-  owner?: mongoose.Types.ObjectId;
+  owner?: string; // Clerk userId (string, not ObjectId)
 };
 
 export type ReservationType = mongoose.Document &
@@ -52,8 +49,7 @@ export const ReservationSchema = new mongoose.Schema<ReservationType>({
     type: Number,
   },
   owner: {
-    type: mongoose.Schema.Types.ObjectId as unknown as StringConstructor,
-    ref: 'User',
+    type: String, // Clerk userId (string, not ObjectId reference)
   },
   court: {
     type: mongoose.Schema.Types.ObjectId as unknown as StringConstructor,
