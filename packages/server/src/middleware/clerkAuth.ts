@@ -35,6 +35,7 @@ export const clerkUserAuth = async (
         hasAuth: !!auth,
         userId,
         hasBearerToken,
+        authObjectKeys: auth ? Object.keys(auth) : [],
         headers: {
           authorization: authHeader
             ? hasBearerToken
@@ -46,7 +47,38 @@ export const clerkUserAuth = async (
       });
     }
 
-    if (!userId) {
+    // If userId is not found from middleware, try to extract from JWT token manually
+    let verifiedUserId = userId;
+
+    if (!verifiedUserId && hasBearerToken) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        // Decode JWT to extract userId (sub claim)
+        // JWT format: header.payload.signature
+        const parts = token.split('.');
+
+        if (parts.length === 3) {
+          // Decode the payload (base64url)
+          const payload = JSON.parse(
+            Buffer.from(parts[1], 'base64url').toString('utf-8'),
+          );
+          verifiedUserId = payload.sub; // sub is the user ID in JWT
+
+          if (authConfig.logAuthAttempts) {
+            signale.info(
+              'Extracted userId from JWT token manually:',
+              verifiedUserId,
+            );
+          }
+        }
+      } catch (decodeError) {
+        if (authConfig.logAuthAttempts) {
+          signale.error('Failed to decode JWT token:', decodeError);
+        }
+      }
+    }
+
+    if (!verifiedUserId) {
       if (authConfig.logAuthAttempts) {
         signale.warn('Unauthorized request - no userId found', {
           path: req.path,
@@ -54,6 +86,11 @@ export const clerkUserAuth = async (
           hasAuthHeader: !!authHeader,
           hasBearerToken,
           authObject: auth,
+          authObjectType: typeof auth,
+          // Log the actual token (first 50 chars for debugging)
+          tokenPreview: hasBearerToken
+            ? authHeader.substring(0, 50) + '...'
+            : 'none',
         });
       }
 
@@ -82,7 +119,11 @@ export const clerkUserAuth = async (
     }
 
     // Get user from Clerk (this will automatically initialize metadata if needed)
-    const user = await UserService.getByClerkId(userId);
+    // verifiedUserId is guaranteed to be non-null here due to the check above
+    if (!verifiedUserId) {
+      throw new Error('verifiedUserId should not be null at this point');
+    }
+    const user = await UserService.getByClerkId(verifiedUserId);
 
     if (!user) {
       return next(
@@ -133,7 +174,38 @@ export const clerkAdminAuth = async (
     const authHeader = req.headers.authorization;
     const hasBearerToken = authHeader && authHeader.startsWith('Bearer ');
 
-    if (!userId) {
+    // If userId is not found from middleware, try to extract from JWT token manually
+    let verifiedUserId = userId;
+
+    if (!verifiedUserId && hasBearerToken) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        // Decode JWT to extract userId (sub claim)
+        // JWT format: header.payload.signature
+        const parts = token.split('.');
+
+        if (parts.length === 3) {
+          // Decode the payload (base64url)
+          const payload = JSON.parse(
+            Buffer.from(parts[1], 'base64url').toString('utf-8'),
+          );
+          verifiedUserId = payload.sub; // sub is the user ID in JWT
+
+          if (authConfig.logAuthAttempts) {
+            signale.info(
+              'Extracted userId from JWT token manually (admin):',
+              verifiedUserId,
+            );
+          }
+        }
+      } catch (decodeError) {
+        if (authConfig.logAuthAttempts) {
+          signale.error('Failed to decode JWT token (admin):', decodeError);
+        }
+      }
+    }
+
+    if (!verifiedUserId) {
       if (authConfig.logAuthAttempts) {
         signale.warn('Admin auth failed - no userId found', {
           path: req.path,
@@ -167,7 +239,11 @@ export const clerkAdminAuth = async (
     }
 
     // Get user from Clerk (this will automatically initialize metadata if needed)
-    const user = await UserService.getByClerkId(userId);
+    // verifiedUserId is guaranteed to be non-null here due to the check above
+    if (!verifiedUserId) {
+      throw new Error('verifiedUserId should not be null at this point');
+    }
+    const user = await UserService.getByClerkId(verifiedUserId);
 
     if (!user) {
       return next(

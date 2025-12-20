@@ -42,12 +42,26 @@ export const clerkClient = createClerkClient({
   secretKey: getClerkSecretKey(),
 });
 
+// Get Clerk publishable key with type safety
+const getClerkPublishableKey = (): string => {
+  const publishableKey = process.env.CLERK_PUBLISHABLE_KEY;
+
+  if (!publishableKey) {
+    throw new Error('CLERK_PUBLISHABLE_KEY environment variable is not set');
+  }
+  return publishableKey;
+};
+
 // Clerk middleware for Express
 // This middleware automatically reads tokens from:
 // 1. Authorization header (Bearer token)
 // 2. Cookies (__session cookie)
 // Note: iOS compatibility headers are set in the auth middleware (clerkAuth.ts)
-export const clerkAuth = clerkMiddleware();
+// The publishable key is required for JWT token validation
+export const clerkAuth = clerkMiddleware({
+  publishableKey: getClerkPublishableKey(),
+  secretKey: getClerkSecretKey(),
+});
 
 export default {
   initClerk,
