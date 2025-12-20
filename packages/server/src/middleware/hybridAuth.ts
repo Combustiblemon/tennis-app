@@ -9,7 +9,7 @@ export const migrationStatus = (
   res: Response,
   next: NextFunction,
 ) => {
-  const hasClerkAuth = !!req.auth?.userId;
+  const hasClerkAuth = !!req.auth?.()?.userId;
 
   // Add authentication status to request for debugging/monitoring
   (req as any).authStatus = {

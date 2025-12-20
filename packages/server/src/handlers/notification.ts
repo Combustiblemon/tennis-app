@@ -1,10 +1,11 @@
 import { NextFunction, Request, Response } from 'express';
+import signale from 'signale';
 import { z } from 'zod';
 
-import UserModel from '../models/User';
 import { authUserHelper, ERRORS, onError, onSuccess } from '../modules/common';
 import { ServerError } from '../modules/error';
 import { subscribeUser } from '../modules/notifications';
+import UserService from '../services/userService';
 
 export const updateToken = async (
   req: Request,
@@ -38,25 +39,39 @@ export const updateToken = async (
     });
   }
 
-  const usr = await UserModel.findById(user._id);
+  // Check if token already exists in user's metadata
+  const tokenExists = user.FCMTokens.includes(FCMToken);
 
-  if (!usr) {
-    throw new Error('no user found');
-  }
-
-  const subscribed = await subscribeUser(usr.role, [FCMToken]);
+  // Subscribe token to topics based on user role
+  const subscribed = await subscribeUser(user.role, [FCMToken]);
 
   if (subscribed) {
-    usr?.addToken(FCMToken);
-  } else {
-    usr?.removeToken(FCMToken);
-  }
+    // If subscription succeeded, add token to metadata (if not already there)
+    if (!tokenExists) {
+      const added = await UserService.addFCMToken(user.id, FCMToken);
 
-  await usr?.save();
-
-  if (subscribed) {
+      if (!added) {
+        signale.warn(
+          `Failed to add FCM token ${FCMToken} to user ${user.id} metadata`,
+        );
+      }
+    } else {
+      signale.info(
+        `FCM token ${FCMToken} already exists for user ${user.id}, subscription refreshed`,
+      );
+    }
     res.status(200).json(onSuccess({}, 'user/id', 'PUT'));
   } else {
+    // If subscription failed, remove token from metadata (if it exists)
+    if (tokenExists) {
+      const removed = await UserService.removeFCMToken(user.id, FCMToken);
+
+      if (removed) {
+        signale.warn(
+          `Removed FCM token ${FCMToken} from user ${user.id} due to subscription failure`,
+        );
+      }
+    }
     res.status(200).json(
       onError(
         new ServerError({

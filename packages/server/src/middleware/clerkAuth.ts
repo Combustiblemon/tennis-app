@@ -18,7 +18,7 @@ export const clerkUserAuth = [
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
 
-      const { userId } = req.auth!;
+      const { userId } = req.auth?.() || { userId: null };
 
       if (!userId) {
         return next(
@@ -31,36 +31,18 @@ export const clerkUserAuth = [
         );
       }
 
-      // Find user in our database based on Clerk ID
-      let user = await UserService.getByClerkId(userId);
+      // Get user from Clerk (this will automatically initialize metadata if needed)
+      const user = await UserService.getByClerkId(userId);
 
       if (!user) {
-        // Try to get Clerk user data and create/link user
-        try {
-          if (req.clerkUser) {
-            user = await UserService.findOrCreateFromClerk(req.clerkUser);
-          } else {
-            signale.warn(`User with Clerk ID ${userId} not found and no Clerk user data available`);
-            return next(
-              new ServerError({
-                error: ERRORS.USER_NOT_FOUND,
-                status: 404,
-                operation: req.method as 'GET',
-                data: { reason: 'user_not_synced' },
-              }),
-            );
-          }
-        } catch (error) {
-          signale.error('Error creating user from Clerk data:', error);
-          return next(
-            new ServerError({
-              error: ERRORS.INTERNAL_SERVER_ERROR,
-              status: 500,
-              operation: req.method as 'GET',
-              data: { reason: 'user_creation_failed' },
-            }),
-          );
-        }
+        return next(
+          new ServerError({
+            error: ERRORS.USER_NOT_FOUND,
+            status: 404,
+            operation: req.method as 'GET',
+            data: { reason: 'user_not_found' },
+          }),
+        );
       }
 
       req.user = user;
@@ -91,7 +73,7 @@ export const clerkAdminAuth = [
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
 
-      const { userId } = req.auth!;
+      const { userId } = req.auth?.() || { userId: null };
 
       if (!userId) {
         return next(
@@ -104,36 +86,18 @@ export const clerkAdminAuth = [
         );
       }
 
-      // Find user in our database
-      let user = await UserService.getByClerkId(userId);
+      // Get user from Clerk (this will automatically initialize metadata if needed)
+      const user = await UserService.getByClerkId(userId);
 
       if (!user) {
-        // Try to get Clerk user data and create/link user
-        try {
-          if (req.clerkUser) {
-            user = await UserService.findOrCreateFromClerk(req.clerkUser);
-          } else {
-            signale.warn(`Admin user with Clerk ID ${userId} not found and no Clerk user data available`);
-            return next(
-              new ServerError({
-                error: ERRORS.USER_NOT_FOUND,
-                status: 404,
-                operation: req.method as 'GET',
-                data: { reason: 'admin_user_not_synced' },
-              }),
-            );
-          }
-        } catch (error) {
-          signale.error('Error creating admin user from Clerk data:', error);
-          return next(
-            new ServerError({
-              error: ERRORS.INTERNAL_SERVER_ERROR,
-              status: 500,
-              operation: req.method as 'GET',
-              data: { reason: 'admin_user_creation_failed' },
-            }),
-          );
-        }
+        return next(
+          new ServerError({
+            error: ERRORS.USER_NOT_FOUND,
+            status: 404,
+            operation: req.method as 'GET',
+            data: { reason: 'user_not_found' },
+          }),
+        );
       }
 
       // Check if user has admin privileges
@@ -174,20 +138,12 @@ export const clerkOptionalAuth = async (
   next: NextFunction,
 ) => {
   try {
-    const { userId } = req.auth || {};
+    const auth = req.auth?.();
+    const { userId } = auth || {};
 
     if (userId) {
-      let user = await UserService.getByClerkId(userId);
-
-      // Try to create/link user if not found and Clerk user data is available
-      if (!user && req.clerkUser) {
-        try {
-          user = await UserService.findOrCreateFromClerk(req.clerkUser);
-        } catch (error) {
-          signale.error('Error in optional auth user creation:', error);
-          // Don't fail the request for optional auth
-        }
-      }
+      // Get user from Clerk (this will automatically initialize metadata if needed)
+      const user = await UserService.getByClerkId(userId);
 
       if (user) {
         req.user = user;
