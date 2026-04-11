@@ -5,8 +5,8 @@ import express from 'express';
 import signale from 'signale';
 
 import { authConfig } from './config/authConfig';
-import { isProduction } from './modules/common';
 import { clerkAuth, initClerk } from './modules/clerk';
+import { isProduction } from './modules/common';
 import dbConnect from './modules/dbConnect';
 import { initEmailClient } from './modules/email';
 import { errorHandler } from './modules/error';
@@ -24,8 +24,12 @@ initFirebaseApp();
 const logAuthConfig = () => {
   signale.info('🔐 Authentication Configuration:');
   signale.success('  Mode: Clerk Authentication Only');
-  signale.info(`  Auto user creation: ${authConfig.enableAutoUserCreation ? '✅' : '❌'}`);
-  signale.info(`  User migration: ${authConfig.enableUserMigration ? '✅' : '❌'}`);
+  signale.info(
+    `  Auto user creation: ${authConfig.enableAutoUserCreation ? '✅' : '❌'}`,
+  );
+  signale.info(
+    `  User migration: ${authConfig.enableUserMigration ? '✅' : '❌'}`,
+  );
   signale.info(`  Role sync: ${authConfig.enableRoleSync ? '✅' : '❌'}`);
 
   if (authConfig.logAuthAttempts || authConfig.logMigrationStatus) {
@@ -35,7 +39,9 @@ const logAuthConfig = () => {
 
 // Initialize Clerk - required for authentication
 if (!initClerk()) {
-  signale.error('Clerk initialization failed - server cannot start without authentication');
+  signale.error(
+    'Clerk initialization failed - server cannot start without authentication',
+  );
   process.exit(1);
 }
 

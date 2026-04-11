@@ -49,6 +49,15 @@ export const clerkUserAuth = async (
 
     // If userId is not found from middleware, try to extract from JWT token manually
     let verifiedUserId = userId;
+    let jwtPayload: {
+      sub?: string;
+      email?: string;
+      first_name?: string;
+      firstName?: string;
+      last_name?: string;
+      lastName?: string;
+      public_metadata?: { role?: string };
+    } | null = null;
 
     if (!verifiedUserId && hasBearerToken) {
       try {
@@ -59,10 +68,10 @@ export const clerkUserAuth = async (
 
         if (parts.length === 3) {
           // Decode the payload (base64url)
-          const payload = JSON.parse(
+          jwtPayload = JSON.parse(
             Buffer.from(parts[1], 'base64url').toString('utf-8'),
           );
-          verifiedUserId = payload.sub; // sub is the user ID in JWT
+          verifiedUserId = jwtPayload?.sub || null; // sub is the user ID in JWT
 
           if (authConfig.logAuthAttempts) {
             signale.info(
@@ -123,7 +132,54 @@ export const clerkUserAuth = async (
     if (!verifiedUserId) {
       throw new Error('verifiedUserId should not be null at this point');
     }
-    const user = await UserService.getByClerkId(verifiedUserId);
+
+    let user = await UserService.getByClerkId(verifiedUserId);
+
+    // If user doesn't exist in Clerk but we have a valid JWT, create a minimal user object
+    // This can happen if the user was deleted or there's an environment mismatch
+    if (!user && jwtPayload) {
+      if (authConfig.logAuthAttempts) {
+        signale.warn(
+          `User ${verifiedUserId} not found in Clerk, creating from JWT data`,
+        );
+      }
+
+      // Create a minimal user object from JWT payload
+      // Note: JWT session tokens may not contain all user info
+      user = {
+        id: verifiedUserId,
+        email: jwtPayload.email || '',
+        firstname: jwtPayload.first_name || jwtPayload.firstName || null,
+        lastname: jwtPayload.last_name || jwtPayload.lastName || null,
+        role:
+          (jwtPayload.public_metadata?.role as
+            | 'ADMIN'
+            | 'USER'
+            | 'DEVELOPER') || 'USER',
+        FCMTokens: [],
+      };
+
+      // Try to initialize the user in Clerk if auto-creation is enabled
+      if (authConfig.enableAutoUserCreation) {
+        try {
+          await UserService.initializeUserMetadata(verifiedUserId);
+
+          // Try to fetch again after initialization
+          const fetchedUser = await UserService.getByClerkId(verifiedUserId);
+
+          if (fetchedUser) {
+            user = fetchedUser;
+          }
+        } catch (initError) {
+          if (authConfig.logAuthAttempts) {
+            signale.warn(
+              'Failed to initialize user in Clerk, using JWT data:',
+              initError,
+            );
+          }
+        }
+      }
+    }
 
     if (!user) {
       return next(
@@ -131,7 +187,11 @@ export const clerkUserAuth = async (
           error: ERRORS.USER_NOT_FOUND,
           status: 404,
           operation: req.method as 'GET',
-          data: { reason: 'user_not_found' },
+          data: {
+            reason: 'user_not_found',
+            message:
+              'User not found in Clerk. The JWT token may be from a different environment or the user may have been deleted.',
+          },
         }),
       );
     }
@@ -176,6 +236,15 @@ export const clerkAdminAuth = async (
 
     // If userId is not found from middleware, try to extract from JWT token manually
     let verifiedUserId = userId;
+    let jwtPayload: {
+      sub?: string;
+      email?: string;
+      first_name?: string;
+      firstName?: string;
+      last_name?: string;
+      lastName?: string;
+      public_metadata?: { role?: string };
+    } | null = null;
 
     if (!verifiedUserId && hasBearerToken) {
       try {
@@ -186,10 +255,10 @@ export const clerkAdminAuth = async (
 
         if (parts.length === 3) {
           // Decode the payload (base64url)
-          const payload = JSON.parse(
+          jwtPayload = JSON.parse(
             Buffer.from(parts[1], 'base64url').toString('utf-8'),
           );
-          verifiedUserId = payload.sub; // sub is the user ID in JWT
+          verifiedUserId = jwtPayload?.sub || null; // sub is the user ID in JWT
 
           if (authConfig.logAuthAttempts) {
             signale.info(
@@ -243,7 +312,51 @@ export const clerkAdminAuth = async (
     if (!verifiedUserId) {
       throw new Error('verifiedUserId should not be null at this point');
     }
-    const user = await UserService.getByClerkId(verifiedUserId);
+
+    let user = await UserService.getByClerkId(verifiedUserId);
+
+    // If user doesn't exist in Clerk but we have a valid JWT, create a minimal user object
+    if (!user && jwtPayload) {
+      if (authConfig.logAuthAttempts) {
+        signale.warn(
+          `User ${verifiedUserId} not found in Clerk (admin), creating from JWT data`,
+        );
+      }
+
+      // Create a minimal user object from JWT payload
+      user = {
+        id: verifiedUserId,
+        email: jwtPayload.email || '',
+        firstname: jwtPayload.first_name || jwtPayload.firstName || null,
+        lastname: jwtPayload.last_name || jwtPayload.lastName || null,
+        role:
+          (jwtPayload.public_metadata?.role as
+            | 'ADMIN'
+            | 'USER'
+            | 'DEVELOPER') || 'USER',
+        FCMTokens: [],
+      };
+
+      // Try to initialize the user in Clerk if auto-creation is enabled
+      if (authConfig.enableAutoUserCreation) {
+        try {
+          await UserService.initializeUserMetadata(verifiedUserId);
+
+          const fetchedUser = await UserService.getByClerkId(verifiedUserId);
+
+          if (fetchedUser) {
+            user = fetchedUser;
+          }
+        } catch (initError) {
+          if (authConfig.logAuthAttempts) {
+            signale.warn(
+              'Failed to initialize user in Clerk (admin), using JWT data:',
+              initError,
+            );
+          }
+        }
+      }
+    }
 
     if (!user) {
       return next(
@@ -251,7 +364,11 @@ export const clerkAdminAuth = async (
           error: ERRORS.USER_NOT_FOUND,
           status: 404,
           operation: req.method as 'GET',
-          data: { reason: 'user_not_found' },
+          data: {
+            reason: 'user_not_found',
+            message:
+              'User not found in Clerk. The JWT token may be from a different environment or the user may have been deleted.',
+          },
         }),
       );
     }
