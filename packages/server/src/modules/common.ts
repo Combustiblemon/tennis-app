@@ -61,7 +61,6 @@ export enum ERRORS {
   RESOURCE_NOT_FOUND = 'resource_not_found',
   RESERVATION_TIME_CONFLICT = 'reservation_time_conflict',
   DATE_IN_THE_PAST = 'date_in_the_past',
-  FAILED_TO_SUBSCRIBE_TO_TOPIC = 'failed_to_subscribe_to_topic',
 }
 
 export const addMinutesToTime = (time: string, minutes: number) =>

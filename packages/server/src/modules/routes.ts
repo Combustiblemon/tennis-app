@@ -98,6 +98,7 @@ const setupAuthorizedGroup = (app: Express) => {
     authorized.use('/notifications', notifications);
     {
       notifications.put('/', asyncHandler(notification.updateToken));
+      notifications.delete('/', asyncHandler(notification.deleteToken));
     }
   }
 
